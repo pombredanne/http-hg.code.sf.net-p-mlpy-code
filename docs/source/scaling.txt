@@ -1,0 +1,165 @@
+.. currentmodule:: mlpy
+
+Centering and Scaling
+=====================
+
+Centering
+---------
+
+1d array
+^^^^^^^^
+
+>>> import numpy as np
+>>> x = np.array([1,2,3,4])
+>>> x - np.mean(x)
+array([-1.5, -0.5,  0.5,  1.5])
+
+2d array along rows
+^^^^^^^^^^^^^^^^^^^
+
+>>> import numpy as np
+>>> x = np.arange(12).reshape(3, 4)
+>>> x
+array([[ 0,  1,  2,  3],
+       [ 4,  5,  6,  7],
+       [ 8,  9, 10, 11]])
+>>> x - np.mean(x, axis=1).reshape(-1, 1)
+array([[-1.5, -0.5,  0.5,  1.5],
+       [-1.5, -0.5,  0.5,  1.5],
+       [-1.5, -0.5,  0.5,  1.5]])
+
+2d array along columns
+^^^^^^^^^^^^^^^^^^^^^^
+
+>>> import numpy as np
+>>> x = np.arange(12).reshape(3, 4)
+>>> x
+array([[ 0,  1,  2,  3],
+       [ 4,  5,  6,  7],
+       [ 8,  9, 10, 11]])
+>>> x - np.mean(x, axis=0)
+array([[-4., -4., -4., -4.],
+       [ 0.,  0.,  0.,  0.],
+       [ 4.,  4.,  4.,  4.]])
+
+Unit length scaling
+-------------------
+Elements are scaled to have and unit length
+(:math:`\sum_{i=1}^n {x_{i}^2} = 1`).
+
+1d array
+^^^^^^^^
+:math:`X` is scaled as:
+
+.. math:: \hat{X} = \frac{X}{\displaystyle\sqrt{\sum_{i=1}^n x_i^2}}
+
+>>> import numpy as np
+>>> x = np.array([1,2,3,4])
+>>> xs = x / np.sqrt(np.sum((x)**2))
+>>> xs
+array([ 0.18257419,  0.36514837,  0.54772256,  0.73029674])
+>>> np.sum(xs**2)
+0.99999999999999978
+
+2d array along rows
+^^^^^^^^^^^^^^^^^^^
+:math:`X` is scaled as:
+
+.. math:: \hat{X_i} = \frac {X_i} {\displaystyle\sqrt {\sum_{j=1}^p x_{ij}^2} } , \quad i=1, \dots, n
+
+where :math:`n` is the number of rows and :math:`p` is the number of columns.
+
+>>> import numpy as np
+>>> x = np.arange(12).reshape(3, 4)
+>>> x
+array([[ 0,  1,  2,  3],
+       [ 4,  5,  6,  7],
+       [ 8,  9, 10, 11]])
+>>> xs = x / np.sqrt(np.sum((x)**2, axis=1)).reshape(-1, 1)
+>>> xs
+array([[ 0.        ,  0.26726124,  0.53452248,  0.80178373],
+       [ 0.35634832,  0.4454354 ,  0.53452248,  0.62360956],
+       [ 0.4181667 ,  0.47043754,  0.52270837,  0.57497921]])
+>>> np.sum(xs**2, axis=1)
+array([ 1.,  1.,  1.])
+
+2d array along columns
+^^^^^^^^^^^^^^^^^^^^^^
+:math:`X` is scaled as:
+
+.. math:: \hat{X_j} = \frac {X_j} {\displaystyle\sqrt {\sum_{i=1}^n x_{ij}^2} } , \quad j=1, \dots, p
+
+where :math:`n` is the number of rows and :math:`p` is the number of columns.
+
+>>> import numpy as np
+>>> x = np.arange(12).reshape(3, 4)
+>>> x
+array([[ 0,  1,  2,  3],
+       [ 4,  5,  6,  7],
+       [ 8,  9, 10, 11]])
+>>> xs = x / np.sqrt(np.sum((x)**2, axis=0))
+>>> xs
+array([[ 0.        ,  0.09667365,  0.16903085,  0.22423053],
+       [ 0.4472136 ,  0.48336824,  0.50709255,  0.52320456],
+       [ 0.89442719,  0.87006284,  0.84515425,  0.8221786 ]])
+>>> np.sum(xs**2, axis=0)
+array([ 1.,  1.,  1., 1.])
+
+Standardization
+---------------
+Elements are scaled to have unit standard deviation. The standard deviation
+is computed using :math:`n-1` instead of :math:`n` (Bessel's correction).
+
+1d array
+^^^^^^^^
+:math:`X` is scaled as:
+
+.. math:: \hat{X} = \frac{X}{\displaystyle\sqrt{\frac{\displaystyle\sum_{i=1}^n (x_i-\bar{x})^2}{n-1}}}
+
+>>> import numpy as np
+>>> x = np.array([1,2,3,4])
+>>> xs = x / np.std(x, ddof=1) # ddof=1: Bessel's correction
+>>> xs
+array([ 0.77459667,  1.54919334,  2.32379001,  3.09838668])
+>>> np.std(xs, ddof=1)
+1.0
+
+2d array along rows
+^^^^^^^^^^^^^^^^^^^
+:math:`X` is scaled as:
+
+.. math:: \hat{X_i} = \frac {X_i}{\displaystyle\sqrt{\frac{\displaystyle\sum_{j=1}^p (x_{ij}-\bar{x}_i)^2}{p-1}}}, \quad i=1, \dots, n
+
+>>> import numpy as np
+>>> x = np.arange(12).reshape(3, 4)
+>>> x
+array([[ 0,  1,  2,  3],
+       [ 4,  5,  6,  7],
+       [ 8,  9, 10, 11]])
+>>> xs = x / np.std(x, axis=1, ddof=1).reshape(-1, 1)
+>>> xs
+array([[ 0.        ,  0.77459667,  1.54919334,  2.32379001],
+       [ 3.09838668,  3.87298335,  4.64758002,  5.42217668],
+       [ 6.19677335,  6.97137002,  7.74596669,  8.52056336]])
+>>> np.std(xs, axis=1, ddof=1)
+array([ 1.,  1.,  1.])
+
+2d array along columns
+^^^^^^^^^^^^^^^^^^^^^^
+:math:`X` is scaled as:
+
+.. math:: \hat{X_j} = \frac {X_j}{\displaystyle\sqrt{\frac{\displaystyle\sum_{i=1}^n (x_{ij}-\bar{x}_j)^2}{n-1}}}, \quad j=1, \dots, p
+
+>>> import numpy as np
+>>> x = np.arange(12).reshape(3, 4)
+>>> x
+array([[ 0,  1,  2,  3],
+       [ 4,  5,  6,  7],
+       [ 8,  9, 10, 11]])
+>>> xs = x / np.std(x, axis=0, ddof=1)
+>>> xs
+array([[ 0.  ,  0.25,  0.5 ,  0.75],
+       [ 1.  ,  1.25,  1.5 ,  1.75],
+       [ 2.  ,  2.25,  2.5 ,  2.75]])
+>>> np.std(xs, axis=0, ddof=1)
+array([ 1.,  1.,  1., 1.])
