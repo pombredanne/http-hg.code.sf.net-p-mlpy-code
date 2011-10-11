@@ -118,7 +118,7 @@ packages=['mlpy', 'mlpy.wavelet', 'mlpy.hcluster',
 
 
 setup(name = 'mlpy',
-      version='3.0',
+      version='3.0a',
       requires=['numpy (>=1.3.0)', 'scipy (>=0.7.0)', 'gsl (>=1.14)'],
       description='mlpy - Machine Learning Py - ' \
           'High-Performance Python Package for Predictive Modeling',

@@ -1,6 +1,7 @@
 include *.txt
 recursive-include mlpy *.h
 recursive-include mlpy *.pxd
+recursive-include mlpy *.pyx
 include docs/Makefile
 include docs/source/*.py
 include docs/source/*.txt
