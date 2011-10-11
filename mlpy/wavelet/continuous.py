@@ -1,6 +1,5 @@
-## This code is written by Davide Albanese, <albanese@fbk.eu> and
-## Marco Chierici, <chierici@fbk.eu>.
-## (C) 2008 Fondazione Bruno Kessler - Via Santa Croce 77, 38100 Trento, ITALY.
+## This code is written by Davide Albanese, <albanese@fbk.eu>
+## (C) 2011 mlpy Developers.
 
 ## See: Practical Guide to Wavelet Analysis - C. Torrence and G. P. Compo.
 

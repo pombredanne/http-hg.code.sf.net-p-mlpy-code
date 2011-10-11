@@ -1,6 +1,6 @@
 /*  
     This code is written by <albanese@fbk.it>.
-    (C) 2008 Fondazione Bruno Kessler - Via Santa Croce 77, 38100 Trento, ITALY.
+    (C) 2008 mlpy Developers.
     
     See DWT in the GSL Library.
 

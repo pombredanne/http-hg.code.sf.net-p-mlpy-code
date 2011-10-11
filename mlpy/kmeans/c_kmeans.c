@@ -1,6 +1,6 @@
 /*  
     This code is written by <albanese@fbk.it>.
-    (C) 2010 Fondazione Bruno Kessler - Via Santa Croce 77, 38100 Trento, ITALY.
+    (C) 2010 mlpy Developers.
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
