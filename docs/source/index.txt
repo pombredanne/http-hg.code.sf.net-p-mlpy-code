@@ -32,11 +32,12 @@ included in mlpy.
    dim_red
    scaling
    crossval
-   wavelet
    canberra
+   borda
    findpeaks
    metrics
-   
+   wavelet  
+
 
 Indices and tables
 ------------------
