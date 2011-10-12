@@ -109,7 +109,7 @@ Kernel Adatron
          the algoritm stops when abs(1 - margin) < eps
 	 
    .. automethod:: learn(K, y)
-   .. automethod:: pred(k)
+   .. automethod:: pred(Kt)
    .. automethod:: margin()
    .. automethod:: steps()
    .. automethod:: alpha()
