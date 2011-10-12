@@ -23,133 +23,117 @@ import itertools
 import numpy as np
 
 
-def cv_kfold(a, k, strat=None, seed=0):
-    """Randomly splits the array `a` into train and test partitions
-    for k-fold cross-validation.
+def cv_kfold(n, k, strat=None, seed=0):
+    """Returns train and test indexes for k-fold 
+    cross-validation.
     
     :Parameters:
-       a : 1d array_like
-          source array to be parttioned
+       n : int (n > 1) 
+          number of indexes
        k : int (k > 1) 
-          number of iterations (folds). The case `k` = n
-          (where n is the number of elements in `a`) is known as 
-          leave-one-out cross-validation.
-       strat : None or  1d array_like integer
+          number of iterations (folds). The case `k` = `n`
+          is known as leave-one-out cross-validation.
+       strat : None or 1d array_like integer (of length `n`)
           labels for stratification. If `strat` is not None
-          returns 'stratified' k-fold CV partitions, where
-          each subsample has roughly the same label proportions.
-          If strat is not of integer type a casting is
-          performed.
+          returns 'stratified' k-fold CV indexes, where
+          each subsample has roughly the same label proportions
+          of `strat`.
        seed : int
           random seed
 
     :Returns:
-       ap: list of tuples
+       idx: list of tuples
           list of `k` tuples containing the train and 
-          test elements of `a`
+          test indexes
     
-    Example
+    Example:
 
     >>> import mlpy
-    >>> a = range(12)
-    >>> ap = mlpy.cv_kfold(a, k=3)
-    >>> for tr, ts in ap: tr, ts
+    >>> idx = mlpy.cv_kfold(n=12, k=3)
+    >>> for tr, ts in idx: tr, ts
     ... 
     (array([2, 8, 1, 7, 9, 3, 0, 5]), array([ 6, 11,  4, 10]))
     (array([ 6, 11,  4, 10,  9,  3,  0,  5]), array([2, 8, 1, 7]))
     (array([ 6, 11,  4, 10,  2,  8,  1,  7]), array([9, 3, 0, 5]))
-    
-    Stratification example:
-    
-    >>> strat = [1,1,1,1,2,2,2,2,2,2,2,2]
-    >>> ap = mlpy.cv_kfold(a, k=3, strat=strat)
-    >>> for tr, ts in ap: tr, ts
+    strat = [0,0,0,0,0,0,0,0,1,1,1,1]
+    >>> idx = mlpy.cv_kfold(12, k=4, strat=strat)
+    >>> for tr, ts in idx: tr, ts
     ... 
-    (array([ 1,  0,  9,  5, 10, 11,  7]), array([2, 3, 6, 4, 8]))
-    (array([ 2,  3,  0,  6,  4,  8, 11,  7]), array([ 1,  9,  5, 10]))
-    (array([ 2,  3,  1,  6,  4,  8,  9,  5, 10]), array([ 0, 11,  7]))
-
-    k must be less or equal than the number of samples of a group:
-    
-    >>> ap = mlpy.cv_kfold(a, k=5, strat=strat) # ValueError: k must be <= 4
+    (array([ 1,  7,  3,  0,  5,  4,  8, 10,  9]), array([ 6,  2, 11]))
+    (array([ 6,  2,  3,  0,  5,  4, 11, 10,  9]), array([1, 7, 8]))
+    (array([ 6,  2,  1,  7,  5,  4, 11,  8,  9]), array([ 3,  0, 10]))
+    (array([ 6,  2,  1,  7,  3,  0, 11,  8, 10]), array([5, 4, 9]))
     """
 
-    _a = np.asarray(a) 
     
-    if k <= 1:
+    if n < 2:
+        raise ValueError("n must be > 1")
+
+    if k < 2:
         raise ValueError("k must be > 1")
-
-    if _a.ndim != 1:
-        raise ValueError("a must be an 1d array_like object")
-
-    if _a.shape[0] <= 1:
-        raise ValueError("number of elements of a must be larger than 1")
-
+    
     if strat is not None:
         _strat = np.asarray(strat, dtype=np.int)
-        if _a.shape[0] != _strat.shape[0]:
+        if n != _strat.shape[0]:
             raise ValueError("a, strat: shape mismatch")
     else:
-        _strat = np.zeros(_a.shape[0], dtype=np.int)
+        _strat = np.zeros(n, dtype=np.int)
     
-    labels = np.unique(_strat)   
+    labels = np.unique(_strat)
 
     # check k
-    nmin = np.min([_a[lab == _strat].shape[0] for lab in labels])
-    if k > nmin:
-        raise ValueError('k must be <= %d' % nmin)
+    kmax = np.min([np.sum(l == _strat) for l in labels])
+    if k > kmax:
+        raise ValueError('k must be <= %d' % kmax)
 
     np.random.seed(seed)
 
-    alab = []
-    for lab in labels:
-        tmp = _a[lab == _strat]
+    splits = []
+    for l in labels:
+        tmp = np.where(l == _strat)[0]
         np.random.shuffle(tmp)
-        alab.append(np.array_split(tmp, k))
+        splits.append(np.array_split(tmp, k))
 
-    ret = []
+    idx = []
     for i in range(k):
-        tr, ts = [], []
-        for j in range(len(alab)):
-            tr.extend(alab[j][:i] + alab[j][i+1:])
-            ts.extend(alab[j][i])
-        ret.append((np.concatenate(tr), np.asarray(ts)))
+        idx1, idx2 = [], []
+        for j in range(len(splits)):
+            idx1.extend(splits[j][:i] + splits[j][i+1:])
+            idx2.extend(splits[j][i])
+        idx.append((np.concatenate(idx1), np.asarray(idx2)))
             
-    return ret
+    return idx
 
 
-def cv_random(a, k, p, strat=None, seed=0):
-    """Randomly splits the array `a` into train and test partitions
-    for random subsampling cross-validation. The proportion of the
-    train/test split is not dependent on the number of iterations
-    (`k`).
+def cv_random(n, k, p, strat=None, seed=0):
+    """Returns train and test indexes for random subsampling 
+    cross-validation. The proportion of the train/test indexes
+    is not dependent on the number of iterations `k`.
         
     :Parameters:
-       a : 1d array_like
-          source array to be partitioned
+       n : int (n > 1)
+          number of indexes
        k : int (k > 0) 
           number of iterations (folds)
-       p : float (0 < `p` < 100) 
-          percentage of elements in the test splits
-       strat : None or  1d array_like integer
+       p : float (0 <= p <= 100) 
+          percentage of indexes in test
+       strat : None or  1d array_like integer (of length `n`)
           labels for stratification. If `strat` is not None
-          returns 'stratified' random subsampling CV 
-          partitions, where each subsample has roughly the 
-          same label proportions. If strat is not of integer
-          type a casting is performed.
+          returns 'stratified' random subsampling CV indexes,
+          where each subsample has roughly the same label 
+          proportions of `strat`.
        seed : int
           random seed
           
     :Returns:
-       ap : list of tuples
+        idx: list of tuples
           list of `k` tuples containing the train and 
-          test elements of `a`
+          test indexes
 
-    Example
+    Example:
     
     >>> import mlpy
-    >>> a = range(12)
-    >>> ap = mlpy.cv_random(a, k=4, p=30)
+    >>> ap = mlpy.cv_random(n=12, k=4, p=30)
     >>> for tr, ts in ap: tr, ts
     ... 
     (array([ 6, 11,  4, 10,  2,  8,  1,  7,  9]), array([3, 0, 5]))
@@ -158,72 +142,66 @@ def cv_random(a, k, p, strat=None, seed=0):
     (array([2, 4, 8, 9, 5, 6, 1, 0, 7]), array([10, 11,  3]))
     """
 
-    _a = np.asarray(a)   
-    
-    if k < 1:
-        raise ValueError("k must be > 0")
-    
-    if (p <= 0.0) or (p >= 100.0):
-        raise ValueError("p must be > 0 and < 100)")
+    if n < 2:
+        raise ValueError("n must be > 1")
 
-    if _a.ndim != 1:
-        raise ValueError("a must be an 1d array_like object")
-
-    if _a.shape[0] <= 1:
-        raise ValueError("shape of a must be > 1")
+    if k < 2:
+        raise ValueError("k must be > 1")
+    
+    if (p < 0) or (p > 100):
+        raise ValueError("p must be in [0, 100]")
 
     if strat is not None:
         _strat = np.asarray(strat, dtype=np.int)
-        if _a.shape[0] != _strat.shape[0]:
+        if n != _strat.shape[0]:
             raise ValueError("a, strat: shape mismatch")
     else:
-        _strat = np.zeros(_a.shape[0], dtype=np.int)       
+        _strat = np.zeros(n, dtype=np.int)
 
     labels = np.unique(_strat)
 
     # check p
-    nmin = np.min([_a[lab == _strat].shape[0] for lab in labels])
-    if int(0.01*p*nmin) == 0:
-        raise ValueError('p must be >= %.2f%%' % (nmin**-1 * 100))
+    pmin = np.min([np.sum(l == _strat) for l in labels])**-1 * 100
+    if p < pmin:
+        raise ValueError('p must be >= %.3f' % pmin)
             
     np.random.seed(seed)
 
-    ret = []
+    idx = []
     for _ in range(k):        
-        tr, ts = [], []
-        for lab in labels:
-            tmp = _a[lab == _strat]
-            n = tmp.shape[0] - int(0.01*p*tmp.shape[0])
+        idx1, idx2 = [], []
+        for l in labels:
+            tmp = np.where(l == _strat)[0]
+            g = tmp.shape[0] - int(0.01*p*tmp.shape[0])
             np.random.shuffle(tmp)
-            tr.append(tmp[:n])
-            ts.append(tmp[n:])
+            idx1.append(tmp[:g])
+            idx2.append(tmp[g:])
         
-        ret.append((np.concatenate(tr), np.concatenate(ts)))
+        idx.append((np.concatenate(idx1), np.concatenate(idx2)))
 
-    return ret
+    return idx
 
 
-def cv_all(a, p):
-    """Randomly splits the array `a` into train and test partitions
-    for all-combinations cross-validation.
+def cv_all(n, p):
+    """Returns train and test indexes for all-combinations 
+    cross-validation.
 
     :Parameters:
-       a : 1d array_like
-          source array to be partitioned
-       p : float (0 < `p` < 100) 
-          percentage of elements in the test splits
+       n : int (n > 1)
+          number of indexes
+       p : float (0 <= p <= 100) 
+          percentage of indexes in test
 
     :Returns:
-       ap : list of tuples
-          list of `k` tuples containing the train and 
-          test elements of `a`
+       idx : list of tuples
+          list of tuples containing the train and 
+          test indexes
 
     Example
 
     >>> import mlpy
-    >>> a = range(4)
-    >>> ap = mlpy.cv_all(a, 50)
-    >>> for tr, ts in ap: tr, ts
+    >>> idx = mlpy.cv_all(n=4, p=50)
+    >>> for tr, ts in idx: tr, ts
     ... 
     (array([2, 3]), array([0, 1]))
     (array([1, 3]), array([0, 2]))
@@ -231,30 +209,27 @@ def cv_all(a, p):
     (array([0, 3]), array([1, 2]))
     (array([0, 2]), array([1, 3]))
     (array([0, 1]), array([2, 3]))
-    >>> part = mlpy.cv_all(a, 10) # ValueError: p must be >= 25.00%
+    >>> idx = mlpy.cv_all(a, 10) # ValueError: p must be >= 25.000
     """
 
-    _a = np.asarray(a)   
-        
-    if (p <= 0.0) or (p >= 100.0):
-        raise ValueError("p must be > 0 and < 100)")
+    if n < 2:
+        raise ValueError("n must be > 1")
 
-    if _a.ndim != 1:
-        raise ValueError("a must be an 1d array_like object")
-
-    if _a.shape[0] <= 1:
-        raise ValueError("shape of a must be > 1")
+    if (p < 0.0) or (p > 100.0):
+        raise ValueError("p must be in [0, 100]")
     
     # check p
-    n = int(0.01*p*_a.shape[0])
-    if n == 0:
-        raise ValueError('p must be >= %.2f%%' % (_a.shape[0]**-1 * 100))
+    pmin = n**-1 * 100
+    if p < pmin:
+        raise ValueError('p must be >= %.3f' % pmin)
     
-    tmp = np.asarray(list(itertools.combinations(_a, n)))
+    k = int(0.01 * p * n)
+    a = np.arange(n)
+    tmp = np.asarray(list(itertools.combinations(a, k)))
 
-    ret = []
-    for ts in tmp:
-        tr = np.setdiff1d(_a, ts)
-        ret.append((tr, ts))
+    idx = []
+    for idx2 in tmp:
+        idx1 = np.setdiff1d(a, idx2)
+        idx.append((idx1, idx2))
 
-    return ret
+    return idx
