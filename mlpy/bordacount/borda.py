@@ -63,7 +63,7 @@ def borda_count(x, k=None):
     if k < 1 or k > p:
         raise ValueError('k must be in [1, %d]' % p)
 
-    ext, pos = _borda.core(x_arr, k)
+    ext, pos = cborda.core(x_arr, k)
         
     invpos = (pos + 1)**(-1) # avoid zero division
     idx = np.lexsort(keys=(invpos, ext))[::-1] 
