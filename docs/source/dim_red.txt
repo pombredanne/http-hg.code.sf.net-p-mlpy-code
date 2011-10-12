@@ -144,7 +144,7 @@ Example:
 >>> x -= np.mean(x, axis=0) # center the data
 >>> A = mlpy.srda(x, y, alpha=1) # compute the tranformation matrix
 >>> A.shape
-(2, 3)
+(2, 2)
 >>> z = np.dot(x, A.T) # embed x to C-1=2 -dimensional subspace
 >>> z.shape
 (700, 2)

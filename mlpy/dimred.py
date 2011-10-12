@@ -89,7 +89,7 @@ def lda(x, y):
         covi = np.cov(xi.T)
         sw += idx.shape[0] / float(n) * covi
             
-    st = np.dot(xarr.T, xarr)
+    st = np.cov(xarr.T)
     sb = st - sw
     evals, evecs = spla.eig(sw, sb)
     idx = np.argsort(evals)[::-1]
