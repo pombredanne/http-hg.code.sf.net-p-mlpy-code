@@ -55,7 +55,7 @@ def cv_kfold(n, k, strat=None, seed=0):
     (array([2, 8, 1, 7, 9, 3, 0, 5]), array([ 6, 11,  4, 10]))
     (array([ 6, 11,  4, 10,  9,  3,  0,  5]), array([2, 8, 1, 7]))
     (array([ 6, 11,  4, 10,  2,  8,  1,  7]), array([9, 3, 0, 5]))
-    strat = [0,0,0,0,0,0,0,0,1,1,1,1]
+    >>> strat = [0,0,0,0,0,0,0,0,1,1,1,1]
     >>> idx = mlpy.cv_kfold(12, k=4, strat=strat)
     >>> for tr, ts in idx: tr, ts
     ... 

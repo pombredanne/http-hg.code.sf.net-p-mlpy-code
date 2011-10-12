@@ -33,13 +33,13 @@ included in mlpy.
    cluster
    weighting
    dim_red
-   scaling
    crossval
    canberra
    borda
    findpeaks
    metrics
-   wavelet  
+   wavelet
+   scaling  
 
 
 Indices and tables
