@@ -145,7 +145,7 @@ Example:
 >>> A = mlpy.srda(x, y, alpha=1) # compute the tranformation matrix
 >>> A.shape
 (2, 2)
->>> z = np.dot(x, A.T) # embed x to C-1=2 -dimensional subspace
+>>> z = np.dot(x, A) # embed x to C-1=2 -dimensional subspace
 >>> z.shape
 (700, 2)
 >>> plt.set_cmap(plt.cm.Paired)
