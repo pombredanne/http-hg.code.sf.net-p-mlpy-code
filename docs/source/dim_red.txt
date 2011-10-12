@@ -130,6 +130,7 @@ Example:
 >>> import numpy as np
 >>> import matplotlib.pyplot as plt
 >>> import mlpy
+>>> np.random.seed(0)
 >>> mean1, cov1, n1 = [1, 5], [[1,1],[1,2]], 200  # 200 samples of class 0
 >>> x1 = np.random.multivariate_normal(mean1, cov1, n1)
 >>> y1 = np.zeros(n1, dtype=np.int)
