@@ -1,8 +1,8 @@
 Install
 =======
 
-Installing on *nix from source
-------------------------------
+Installing on \*nix from source
+-------------------------------
 
 On GNU/Linux, you need the following requirements:
 
