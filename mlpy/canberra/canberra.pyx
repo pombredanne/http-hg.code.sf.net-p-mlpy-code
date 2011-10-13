@@ -6,6 +6,7 @@ cdef extern from "c_canberra.h":
     double c_canberra(double *x, double *y, long n)
     double c_canberra_location(long *x, long *y, long n, long k)
     double c_canberra_stability(long *x, long n, long p, long k)
+    double c_canberra_expected(long n, long k)
 
 def canberra(x, y):
     """Returns the Canberra distance between two P-vectors x and y:
@@ -26,15 +27,11 @@ def canberra(x, y):
 
 
 def canberra_location(x, y, k=None):
-    """Returns the Canberra distance between two top-k lists.
-    A top-k list is the sublist including the elements ranking 
-    from position 0 to k-1 of the original list.
-    x and y must be integer 1d array_like objects with entries
-    from 0 to P-1, where P is the lenght of x and y.
-    If k=None then k will set to P.
-
-    The lower the indicator value, the higher the stability of 
-    the lists.
+    """Returns the Canberra distance between two position lists.
+    A position list of length P contains the position (from 0 to P-1)
+    of P elements. If k is not None the function computes the
+    distance between the lists including the elements from position
+    0 to k-1.
     """
 
     cdef np.ndarray[np.int64_t, ndim=1] x_arr
@@ -58,23 +55,21 @@ def canberra_location(x, y, k=None):
 
 
 def canberra_stability(x, k=None):
-    """Returns the Canberra stability indicator between N top-k
-    ranked lists. A top-k list is the sublist including the elements
-    ranking from position 0 to k-1 of the original list.
-    x must be an integer 2d array_like object (N, P) with entries
-    from 0 to P-1, where N is the number of lists and P is the 
-    number of elements for each list. If k=None then k will set to P.
-
-    The lower the indicator value, the higher the stability of 
+    """Returns the Canberra stability indicator between N position
+    lists. A position list of length P contains the position (from 0 to P-1)
+    of P elements. If k is not None the function computes the
+    indicator between the lists including the elements from position
+    0 to k-1.The lower the indicator value, the higher the stability of 
     the lists.
 
     Example:
 
     >>> import numpy as np
     >>> import mlpy
-    >>> x = np.array([[2,4,1,3,0], [3,4,1,2,0], [2,4,3,0,1]])  # 3 lists with entries must be from 0 to 4!
-    >>> mlpy.canberra_stability(x, 3) #stability indicator on top-3 sublist
+    >>> x = np.array([[2,4,1,3,0], [3,4,1,2,0], [2,4,3,0,1]])  # 3 position lists
+    >>> mlpy.canberra_stability(x, 3) # stability indicator
     0.74862979571499755
+    >>> mlpy.canberra_stability_max(x.shape[1], 3) # max value
     """
 
     cdef np.ndarray[np.int64_t, ndim=2] x_arr
@@ -89,3 +84,37 @@ def canberra_stability(x, k=None):
     
     return c_canberra_stability(<long *> x_arr.data, 
                <long> x_arr.shape[0], <long> x_arr.shape[1], <long> k)
+
+
+def canberra_location_expected(p, k=None):
+    """Returns the expected value of the Canberra location distance,
+    where `p` is the number of elements and `k` is the number of 
+    positions to consider.
+    """
+
+    if k == None:
+        k = p
+
+    return c_canberra_expected(p, k)
+
+
+def canberra_location_max(p):
+    """Return the approximated maximum value of Canberra
+    location distance.
+    """
+
+    return (np.log(3.0) / 2.0) * p - (2.0 / 3.0)
+
+
+def canberra_stability_max(p, k=None):
+    """Returns approximated maximum value of the Canberra 
+    stability indicator where `p` is the number of elements
+    and `k` is the number of positions to consider.
+    """
+    
+
+    if k == None:
+        k = p
+
+    return canberra_location_max(p) / \
+        canberra_location_expected(p, k)

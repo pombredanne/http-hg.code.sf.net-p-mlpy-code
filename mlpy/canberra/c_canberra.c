@@ -82,7 +82,7 @@ double a_harm(long n)
   return n % 2 ? o_harm(n) : e_harm(n); 
 }
 
-double expected_canberra(long n, long k)
+double c_canberra_expected(long n, long k)
 {
   double sum = 0.0;
   long t;
@@ -104,6 +104,6 @@ double c_canberra_stability(long *x, long n, long p, long k)
   for(i=0; i<n; i++)
     for(j=i+1; j<n; j++)
       d += c_canberra_location(x+(i*p), x+(j*p), p, k);
-  expected = expected_canberra(p, k);
+  expected = c_canberra_expected(p, k);
   return (d / ((n * (n-1)) / 2.0)) / expected;
 }

@@ -21,10 +21,20 @@ See [Jurman08]_.
          {\min\{x_i+1, k+1\} + \min\{y_i+1, k+1\}}}
 
 
+.. autofunction:: canberra_location_expected(p, k=None)
+.. autofunction:: canberra_location_max(p)
+
 Canberra Stability Indicator
 ----------------------------
 See [Jurman08]_.
 
+The Canberra stability indicator i computed as:
+
+  .. math::    
+        
+        \frac{1}{((n (n-1)) / 2.0) E\{Ca(S_p, k)\}} \sum_{i>j}{Ca(x_i, x_j, k)}
+
 .. autofunction:: canberra_stability(x, k=None)
+.. autofunction:: canberra_stability_max(p, k=None)
 
 .. [Jurman08] Jurman, Riccadonna, Visintainer and Furlanello. lgebraic stability indicators for ranked lists in molecular profiling. Bioinformatics Vol. 24 no. 2 2008, pages 258–264.
