@@ -62,3 +62,13 @@ __all__ += dimred.__all__
 __all__ += irelief.__all__
 __all__ += parzen.__all__
 __all__ += confidence.__all__
+
+__all__ += ['LibLinear']
+__all__ += ['LibSvm']
+__all__ += ['findpeaks_dist', 'findpeaks_win']
+__all__ += ['kmeans']
+__all__ += ['kernel_linear', 'kernel_gaussian', 
+            'kernel_polynomial', 'kernel_exponential', 
+            'kernel_sigmoid', 'kernel_center']
+__all__ += ['KernelAdatron']
+__all__ += ['canberra', 'canberra_location', 'canberra_stability']
