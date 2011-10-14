@@ -27,11 +27,10 @@ def canberra(x, y):
 
 
 def canberra_location(x, y, k=None):
-    """Returns the Canberra distance between two position lists.
-    A position list of length P contains the position (from 0 to P-1)
-    of P elements. If k is not None the function computes the
-    distance between the lists including the elements from position
-    0 to k-1.
+    """Returns the Canberra distance between two position lists,
+    `x` and `y`. A position list of length P contains the position 
+    (from 0 to P-1) of P elements. k is the location parameter,
+    if k=None will be set to P.
     """
 
     cdef np.ndarray[np.int64_t, ndim=1] x_arr
@@ -47,8 +46,7 @@ def canberra_location(x, y, k=None):
         k = x_arr.shape[0]
 
     if k <= 0 or k > x_arr.shape[0]:
-        raise ValueError("k must be in [1, %i]" % x_arr.shape[0])
-    
+        raise ValueError("k must be in [1, %i]" % x_arr.shape[0])   
 
     return c_canberra_location(<long *> x_arr.data,
                <long *> y_arr.data, <long> x_arr.shape[0], <long> k)
@@ -56,11 +54,15 @@ def canberra_location(x, y, k=None):
 
 def canberra_stability(x, k=None):
     """Returns the Canberra stability indicator between N position
-    lists. A position list of length P contains the position (from 0 to P-1)
-    of P elements. If k is not None the function computes the
-    indicator between the lists including the elements from position
-    0 to k-1.The lower the indicator value, the higher the stability of 
-    the lists.
+    lists, where `x` is an (N, P) matrix. A position list of length 
+    P contains the position (from 0 to P-1) of P elements. k is 
+    the location parameter, if k=None will be set to P. The lower 
+    the indicator value, the higher the stability of the lists.
+
+    The stability is computed by the mean distance of all the 
+    (N(N-1))/2 non trivial values of the distance matrix (computed
+    by canberra_location()) scaled by the expected (average) 
+    value of the Canberra metric.
 
     Example:
 
@@ -69,7 +71,6 @@ def canberra_stability(x, k=None):
     >>> x = np.array([[2,4,1,3,0], [3,4,1,2,0], [2,4,3,0,1]])  # 3 position lists
     >>> mlpy.canberra_stability(x, 3) # stability indicator
     0.74862979571499755
-    >>> mlpy.canberra_stability_max(x.shape[1], 3) # max value
     """
 
     cdef np.ndarray[np.int64_t, ndim=2] x_arr
@@ -95,26 +96,7 @@ def canberra_location_expected(p, k=None):
     if k == None:
         k = p
 
+    if k <= 0 or k > p:
+        raise ValueError("k must be in [1, %i]" % p)
+
     return c_canberra_expected(p, k)
-
-
-def canberra_location_max(p):
-    """Return the approximated maximum value of Canberra
-    location distance.
-    """
-
-    return (np.log(3.0) / 2.0) * p - (2.0 / 3.0)
-
-
-def canberra_stability_max(p, k=None):
-    """Returns approximated maximum value of the Canberra 
-    stability indicator where `p` is the number of elements
-    and `k` is the number of positions to consider.
-    """
-    
-
-    if k == None:
-        k = p
-
-    return canberra_location_max(p) / \
-        canberra_location_expected(p, k)

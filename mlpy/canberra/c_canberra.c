@@ -55,7 +55,7 @@ double c_canberra_location(long *x, long *y, long n, long k)
 }
 
 
-/* The expected (average) value of the canberra location */
+/* The expected value of the canberra location */
 double harm(long n)
 {
   double h = 0.0;
