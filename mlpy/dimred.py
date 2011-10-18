@@ -46,14 +46,16 @@ def gso(v, norm=False):
 def lda(x, y):
     """Linear Discriminant Analysis.
     
-    Returns the transformation matrix `coeff` (P, P) and the 
-    corresponding eigenvalues (P) sorted by decreasing eigenvalue.
-    Each column of `coeff` contains coefficients for one transformation
-    vector.
-    Sample(s) can be embedded into the M (<=P) dimensional space
-    by Z = X coeff_M (z = np.dot(X, coeff[:, :M])).
+    Returns the transformation matrix `coeff` (P, P)
+    and the corresponding eigenvalues (P) sorted by 
+    decreasing eigenvalue. Each column of `x` represents 
+    a variable, while the rows contain observations. 
+    `x` (N,P) must be centered (subtracting the empirical mean 
+    vector from each column of`x`). Each column of `coeff` 
+    contains coefficients for one transformation vector.
     
-    X must be centered by colums.
+    Sample(s) can be embedded into the M (<=P) dimensional space
+    by z = x coeff_M (z = np.dot(x, coeff[:, :M])).
 
     :Parameters:
        x : 2d array_like object (N, P)
@@ -86,10 +88,10 @@ def lda(x, y):
     for i in labels:
         idx = np.where(y==i)[0]
         xi = xarr[idx]
-        covi = np.cov(xi.T)
+        covi = np.cov(xi, rowvar=0)
         sw += idx.shape[0] / float(n) * covi
-            
-    st = np.cov(xarr.T)
+    
+    st = np.cov(xarr, rowvar=0)
     sb = st - sw
     evals, evecs = spla.eig(sw, sb)
     idx = np.argsort(evals)[::-1]
@@ -102,12 +104,15 @@ def lda(x, y):
 def srda(x, y, alpha):
     """Spectral Regression Discriminant Analysis.
 
-    Returns the (P, C-1) transformation matrix,
-    where X is a matrix (N, P) and C is the number of classes.
-    Sample(s) can be embedded into the C-1 dimensional space
-    by Z = X A (z = np.dot(X, A)).
+    Returns the (P, C-1) transformation matrix, where 
+    `x` is a matrix (N,P) and C is the number of classes.
+    Each column of `x` represents a variable, while the 
+    rows contain observations. `x` must be centered 
+    (subtracting the empirical mean vector from each column 
+    of`x`).
 
-    X must be centered by columns.
+    Sample(s) can be embedded into the C-1 dimensional space
+    by z = z coeff (z = np.dot(x, coeff)).
 
     :Parameters:
        x : 2d array_like object
@@ -118,7 +123,7 @@ def srda(x, y, alpha):
           regularization parameter
 
     :Returns:
-       A : 2d numpy array (P, C-1)
+       coeff : 2d numpy array (P, C-1)
           tranformation matrix
     """
 
@@ -156,13 +161,15 @@ def pca(x):
     
     Returns the principal component coefficients `coeff`
     (P, P) and the corresponding eigenvalues (P) of the 
-    covariance matrix of X sorted by decreasing eigenvalue.
-    Each column of `coeff` contains coefficients for one 
-    principal component.
+    covariance matrix of `x` (N,P) sorted by decreasing 
+    eigenvalue. Each column of `x` represents a variable,  
+    while the rows contain observations. `x` must be centered 
+    (subtracting the empirical mean vector from each column 
+    of`x`). Each column of `coeff` contains coefficients 
+    for one principal component.
+    
     Sample(s) can be embedded into the M (<=P) dimensional space
-    by Z = X coeff_M (z = np.dot(X, coeff[:, :M])).
-
-    X must be centered by colums.
+    by z = x coeff_M (z = np.dot(x, coeff[:, :M])).
 
     :Parameters:
        x : 2d numpy array (N, P)
@@ -171,8 +178,8 @@ def pca(x):
     :Returns:
        coeff, evals : 2d numpy array (P, P), 1d numpy array (P)
           principal component coefficients (eigenvectors of
-          the covariance matrix of X) and eigenvalues sorted by 
-          decreasing eigenvalue.
+          the covariance matrix of x) and eigenvalues sorted by 
+          decreasing eigenvalue
     """
 
 
@@ -181,8 +188,8 @@ def pca(x):
     if xarr.ndim != 2:
         raise ValueError("x must be a 2d array_like object")
 
-    c = np.dot(xarr.T, xarr)
-    evals, evecs = np.linalg.eigh(c)
+    C = np.cov(xarr, rowvar=0)
+    evals, evecs = np.linalg.eigh(C)
     idx = np.argsort(evals)[::-1]
     evecs = evecs[:, idx]
     evals = evals[idx]
@@ -190,22 +197,24 @@ def pca(x):
     return evecs, evals
 
 
-def fastpca(x, h, eps=0.01):
-    """Fast principal component analysis using fixed-point
+def fastpca(x, m, eps=0.01):
+    """Fast principal component analysis using the fixed-point
     algorithm.
     
-    Returns the first `h` principal component coefficients
-    `coeff` (P, H). Each column of `coeff` contains coefficients
-    or one principal component.
-    Sample(s) can be embedded into the H (<=P) dimensional space 
-    by Z = X coeff (z = np.dot(X,  coeff)).
+    Returns the first `m` principal component coefficients
+    `coeff` (P, M). Each column of `x` represents a variable,  
+    while the rows contain observations. `x` must be centered 
+    (subtracting the empirical mean vector from each column 
+    of`x`). Each column of `coeff` contains coefficients 
+    for one principal component.
 
-    X must be centered by colums.
+    Sample(s) can be embedded into the m (<=P) dimensional space 
+    by z = x coeff (z = np.dot(X,  coeff)).
 
     :Parameters:
        x : 2d numpy array (N, P)
           data matrix
-       h : integer (0 < h <= P) 
+       m : integer (0 < m <= P) 
           the number of principal axes or eigenvectors required
        eps : float (> 0)
           tolerance error
@@ -219,20 +228,20 @@ def fastpca(x, h, eps=0.01):
     if xarr.ndim != 2:
         raise ValueError("x must be a 2d array_like object")
 
-    h = int(h)
+    m = int(m)
 
     np.random.seed(0)
-    evecs = np.random.rand(h, xarr.shape[1])
+    evecs = np.random.rand(m, xarr.shape[1])
 
-    c = np.dot(xarr.T, xarr)    
-    for i in range(0, h):
+    C = np.cov(xarr, rowvar=0)    
+    for i in range(0, m):
         while True:
             evecs_old = np.copy(evecs[i])
-            evecs[i] = np.dot(c, evecs[i])
+            evecs[i] = np.dot(C, evecs[i])
             
             # Gram-Schmidt orthogonalization
             a = np.dot(evecs[i], evecs[:i].T).reshape(-1, 1)
-            b = a  * evecs[:i] 
+            b = a  * evecs[:i]
             evecs[i] -= np.sum(b, axis=0) # if i=0 sum is 0
             
             # Normalization
@@ -248,12 +257,15 @@ def fastpca(x, h, eps=0.01):
 def fastlda(x, y):
     """Fast implementation of Linear Discriminant Analysis.
     
-    Returns the (P, C-1) transformation matrix,
-    where X is a matrix (N, P) and C is the number of classes.
-    Sample(s) can be embedded into the C-1 dimensional space
-    by Z = X A (z = np.dot(X, A)).
+    Returns the (P, C-1) transformation matrix, where 
+    `x` is a matrix (N,P) and C is the number of classes.
+    Each column of `x` represents a variable, while the 
+    rows contain observations. `x` must be centered 
+    (subtracting the empirical mean vector from each column 
+    of`x`).
 
-    X must be centered by columns.
+    Sample(s) can be embedded into the C-1 dimensional space
+    by z = z coeff (z = np.dot(x, coeff)).
 
     :Parameters:
        x : 2d array_like object
@@ -294,8 +306,8 @@ def fastlda(x, y):
 
 
 def kpca(K):
-    """Kernel Principal Component Analysis.
-    PCA in a kernel-defined feature space making use of the
+    """Kernel Principal Component Analysis, PCA in 
+    a kernel-defined feature space making use of the
     dual representation.
     
     Returns the kernel principal component coefficients 
@@ -303,6 +315,7 @@ def kpca(K):
     where :math:`\lambda` and :math:`\mathbf{v}` are the ordered
     eigenvalues and the corresponding eigenvector of the centered 
     kernel matrix K.
+    
     Sample(s) can be embedded into the G (<=N) dimensional space
     by z = K coeff_G (z = np.dot(K, coeff[:, :G])).
 
