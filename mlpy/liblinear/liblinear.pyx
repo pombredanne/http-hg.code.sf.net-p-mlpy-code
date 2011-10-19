@@ -35,13 +35,13 @@ cdef feature_node *array1d_to_node(np.ndarray[np.float64_t, ndim=1] x):
     nf = nz.shape[0] + 2 # bias term + last (-1) term
         
     ret = <feature_node*> malloc (nf * sizeof(feature_node))
-            
+
     k = 0
     for i in nz:
         ret[k].index = i+1
         ret[k].value = x[i]
         k += 1
-        
+
     ret[nz.shape[0]].index = x.shape[0] + 1 # add bias term
     ret[nz.shape[0]].value = 1 # add bias term
     ret[nz.shape[0]+1].index = -1 # last term
@@ -173,6 +173,8 @@ cdef class LibLinear:
         """
 
         cdef char *ret
+
+        srand(1)
 
         if self.learn_disabled:
             raise ValueError("learn method is disabled (model from file)")

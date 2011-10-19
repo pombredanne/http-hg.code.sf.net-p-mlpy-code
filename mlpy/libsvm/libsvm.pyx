@@ -214,6 +214,8 @@ cdef class LibSvm:
         
         cdef char *ret
 
+        srand(1)
+
         if self.learn_disabled:
             raise ValueError("learn method is disabled (model from file)")
         

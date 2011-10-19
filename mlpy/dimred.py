@@ -20,7 +20,8 @@ from ridge import ridge_base
 from ols import ols_base
 
 
-__all__ = ['lda', 'fastlda', 'pca', 'kpca', 'fastpca', 'srda']
+__all__ = ['lda', 'fastlda', 'pca', 'kpca', 'fastpca', 'srda',
+           'whiten']
 
 
 def proj(u, v):
@@ -339,3 +340,31 @@ def kpca(K):
         evecs[:, i] /= np.sqrt(evals[i])
    
     return evecs, evals
+
+
+def whiten(x):
+    """Whitening.
+
+    Returns whitening and de-withening coefficients.
+
+    z = x coeff_M (z = np.dot(x, coeff[:, :M])).
+
+    Cov(z) = I (np.cov(z, rowvar=0))
+
+    """
+
+    xarr = np.asarray(x, dtype=np.float)
+
+    if xarr.ndim != 2:
+        raise ValueError("x must be a 2d array_like object")
+
+    C = np.cov(xarr, rowvar=0)
+    evals, evecs = np.linalg.eigh(C)
+    idx = np.argsort(evals)[::-1]
+    evecs = evecs[:, idx]
+    evals = evals[idx]
+    
+    w = np.dot(np.diag(evals**-0.5), evecs.T).T
+    dw = np.dot(evecs, np.diag(np.sqrt(evals))).T
+
+    return w, dw
