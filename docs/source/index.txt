@@ -40,8 +40,9 @@ included in mlpy.
    borda
    findpeaks
    metrics
+   borda
    wavelet
-   scaling  
+   scaling
 
 
 Indices and tables
