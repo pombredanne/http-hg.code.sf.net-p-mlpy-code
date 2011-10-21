@@ -13,7 +13,7 @@ Fast Linear Discriminant Analysis
 ---------------------------------
 Fast LDA implementation described in [Cai08]_.
 
-.. autofunction:: fastlda
+.. autofunction:: lda_fast
 
 
 Principal Component Analysis (PCA)
@@ -79,7 +79,7 @@ Fast Principal Component Analysis (FastPCA)
 -------------------------------------------
 Fast PCA implementation described in [Sharma07]_.
 
-.. autofunction:: fastpca
+.. autofunction:: pca_fast
 
 Example reproducing Figure 1 of [Sharma07]_:
 
@@ -118,6 +118,12 @@ Example reproducing Figure 1 of [Sharma07]_:
 >>> plt.show()
 
 .. image:: images/fastpca.png
+
+
+Whitening
+---------
+
+.. autofunction:: whiten
 
 
 Spectral Regression Discriminant Analysis (SRDA)
@@ -163,6 +169,15 @@ Example:
 .. image:: images/srda2.png
 
 
+Kernel Fisher Discriminant Analysis (KFDA)
+------------------------------------------
+
+.. autofunction:: kfda
+
+
+
 
 .. [Cai08] D Cai, X He, J Han. SRDA: An Efficient Algorithm for Large-Scale Discriminant Analysis. Knowledge and Data Engineering, IEEE Transactions on Volume 20, Issue 1, Jan. 2008 Page(s):1 - 12.
 .. [Sharma07]  A Sharma, K K Paliwal. Fast principal component analysis using fixed-point algorithm. Pattern Recognition Letters 28 (2007) 1151–1155.
+.. [Mika99] S Mika et al. Fisher Discriminant Analysis with Kernels. Neural Networks for Signal Processing IX, 1999. Proceedings of the 1999 IEEE Signal Processing Society Workshop.
+.. [Scholkopf96] B Scholkopf, A Smola, KR Muller. Nonlinear Component Analysis as a Kernel EigenValue Problem

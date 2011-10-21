@@ -18,10 +18,11 @@ import numpy as np
 import scipy.linalg as spla
 from ridge import ridge_base
 from ols import ols_base
+import kernel
 
 
-__all__ = ['lda', 'fastlda', 'pca', 'kpca', 'fastpca', 'srda',
-           'whiten']
+__all__ = ['lda', 'lda_fast', 'pca', 'kpca', 'pca_fast', 'srda',
+           'kfda', 'whiten']
 
 
 def proj(u, v):
@@ -47,16 +48,15 @@ def gso(v, norm=False):
 def lda(x, y):
     """Linear Discriminant Analysis.
     
-    Returns the transformation matrix `coeff` (P, P)
-    and the corresponding eigenvalues (P) sorted by 
-    decreasing eigenvalue. Each column of `x` represents 
-    a variable, while the rows contain observations. 
-    `x` (N,P) must be centered (subtracting the empirical mean 
-    vector from each column of`x`). Each column of `coeff` 
-    contains coefficients for one transformation vector.
+    Returns the transformation matrix `coeff` (P, C-1),
+    where `x` is a matrix (N,P) and C is the number of
+    classes. Each column of `x` represents a variable, 
+    while the rows contain observations. 
+    Each column of `coeff` contains coefficients 
+    for one transformation vector.
     
-    Sample(s) can be embedded into the M (<=P) dimensional space
-    by z = x coeff_M (z = np.dot(x, coeff[:, :M])).
+    Sample(s) can be embedded into the C-1 dimensional space
+    by z = x coeff (z = np.dot(x, coeff)).
 
     :Parameters:
        x : 2d array_like object (N, P)
@@ -65,9 +65,8 @@ def lda(x, y):
           class labels
     
     :Returns:
-       coeff, evals : 2d numpy array (P, P), 1d numpy array (P)
-          transformation matrix and the corresponding eigenvalues
-          sorted by decreasing eigenvalue.
+       coeff: 2d numpy array (P, P), 1d numpy array (P)
+          transformation matrix.
     """
 
     xarr = np.asarray(x, dtype=np.float)
@@ -83,23 +82,23 @@ def lda(x, y):
         raise ValueError("x, y shape mismatch")
 
     n, p = xarr.shape[0], xarr.shape[1]
-    
-    sw = np.zeros((p, p), dtype=np.float)  
     labels = np.unique(yarr)
+    
+    sw = np.zeros((p, p), dtype=np.float)   
     for i in labels:
         idx = np.where(y==i)[0]
-        xi = xarr[idx]
-        covi = np.cov(xi, rowvar=0)
-        sw += idx.shape[0] / float(n) * covi
-    
-    st = np.cov(xarr, rowvar=0)
+        sw += np.cov(xarr[idx], rowvar=0) * \
+            (idx.shape[0] - 1)
+    st = np.cov(xarr, rowvar=0) * (n - 1)
+
     sb = st - sw
-    evals, evecs = spla.eig(sw, sb)
+    evals, evecs = spla.eig(sb, sw, overwrite_a=True,
+                            overwrite_b=True)
     idx = np.argsort(evals)[::-1]
     evecs = evecs[:, idx]
-    evals = evals[idx]
-  
-    return evecs, evals
+    evecs = evecs[:, :labels.shape[0]-1]
+    
+    return evecs
 
 
 def srda(x, y, alpha):
@@ -108,12 +107,10 @@ def srda(x, y, alpha):
     Returns the (P, C-1) transformation matrix, where 
     `x` is a matrix (N,P) and C is the number of classes.
     Each column of `x` represents a variable, while the 
-    rows contain observations. `x` must be centered 
-    (subtracting the empirical mean vector from each column 
-    of`x`).
+    rows contain observations.
 
     Sample(s) can be embedded into the C-1 dimensional space
-    by z = z coeff (z = np.dot(x, coeff)).
+    by z = x coeff (z = np.dot(x, coeff)).
 
     :Parameters:
        x : 2d array_like object
@@ -140,6 +137,8 @@ def srda(x, y, alpha):
     if xarr.shape[0] != yarr.shape[0]:
         raise ValueError("x, y shape mismatch")
 
+    xmean = np.mean(xarr, axis=0)
+
     # Point 1 in section 4.2
     yu = np.unique(yarr)
     yk = np.zeros((yu.shape[0]+1, yarr.shape[0]), dtype=np.float)
@@ -152,7 +151,7 @@ def srda(x, y, alpha):
     # Point 2 in section 4.2
     ak = np.empty((yk.shape[0], xarr.shape[1]), dtype=np.float)
     for i in range(yk.shape[0]):
-        ak[i] = ridge_base(xarr, yk[i], alpha)
+        ak[i] = ridge_base(xarr-xmean, yk[i], alpha)
 
     return ak.T
 
@@ -164,10 +163,9 @@ def pca(x):
     (P, P) and the corresponding eigenvalues (P) of the 
     covariance matrix of `x` (N,P) sorted by decreasing 
     eigenvalue. Each column of `x` represents a variable,  
-    while the rows contain observations. `x` must be centered 
-    (subtracting the empirical mean vector from each column 
-    of`x`). Each column of `coeff` contains coefficients 
-    for one principal component.
+    while the rows contain observations. Each column of 
+    `coeff` contains coefficients for one principal 
+    component.
     
     Sample(s) can be embedded into the M (<=P) dimensional space
     by z = x coeff_M (z = np.dot(x, coeff[:, :M])).
@@ -198,16 +196,14 @@ def pca(x):
     return evecs, evals
 
 
-def fastpca(x, m, eps=0.01):
+def pca_fast(x, m, eps=0.01):
     """Fast principal component analysis using the fixed-point
     algorithm.
     
     Returns the first `m` principal component coefficients
     `coeff` (P, M). Each column of `x` represents a variable,  
-    while the rows contain observations. `x` must be centered 
-    (subtracting the empirical mean vector from each column 
-    of`x`). Each column of `coeff` contains coefficients 
-    for one principal component.
+    while the rows contain observations. Each column of `coeff` 
+    contains coefficients for one principal component.
 
     Sample(s) can be embedded into the m (<=P) dimensional space 
     by z = x coeff (z = np.dot(X,  coeff)).
@@ -255,7 +251,7 @@ def fastpca(x, m, eps=0.01):
     return evecs.T
       
 
-def fastlda(x, y):
+def lda_fast(x, y):
     """Fast implementation of Linear Discriminant Analysis.
     
     Returns the (P, C-1) transformation matrix, where 
@@ -266,7 +262,7 @@ def fastlda(x, y):
     of`x`).
 
     Sample(s) can be embedded into the C-1 dimensional space
-    by z = z coeff (z = np.dot(x, coeff)).
+    by z = x coeff (z = np.dot(x, coeff)).
 
     :Parameters:
        x : 2d array_like object
@@ -291,6 +287,8 @@ def fastlda(x, y):
     if xarr.shape[0] != yarr.shape[0]:
         raise ValueError("x, y shape mismatch")
         
+    xmean = np.mean(xarr, axis=0)
+
     yu = np.unique(yarr)
     yk = np.zeros((yu.shape[0]+1, yarr.shape[0]), dtype=np.float)
     yk[0] = 1.
@@ -301,7 +299,7 @@ def fastlda(x, y):
     
     ak = np.empty((yk.shape[0], xarr.shape[1]), dtype=np.float)
     for i in range(yk.shape[0]):
-        ak[i], _ = ols_base(xarr, yk[i], -1)
+        ak[i], _ = ols_base(xarr - xmean, yk[i], -1)
 
     return ak.T
 
@@ -333,7 +331,7 @@ def kpca(K):
     evals, evecs = np.linalg.eigh(K)
     idx = np.argsort(evals)
     idx = idx[::-1]
-    evecs = evecs[:,idx]
+    evecs = evecs[:, idx]
     evals = evals[idx]
     
     for i in range(len(evals)):
@@ -342,15 +340,81 @@ def kpca(K):
     return evecs, evals
 
 
+def kfda(K, y, lmb=0.001):
+    """Kernel Fisher Discriminant Analysis.
+    
+    Returns the transformation matrix `coeff` (N,1),
+    where `K` is a the kernel matrix (N,N) and y
+    is the class labels (the alghoritm works only with 2
+    classes).
+    
+    Sample(s) can be embedded into the Kernel Fisher
+    space by z = K coeff (z = np.dot(K, coeff)).
+
+    :Parameters:
+       K: 2d array_like object (N, N)
+          precomputed kernel matrix
+       y : 1d array_like object integer (N)
+          class labels
+       lmb : float (>= 0.0)
+          regularization parameter
+
+    :Returns:
+       coeff: 2d numpy array (N,1)
+          kernel fisher coefficients.
+    """
+
+    Karr = np.array(K, dtype=np.float)
+
+    yarr = np.asarray(y, dtype=np.int)
+    if yarr.ndim != 1:
+        raise ValueError("y must be an 1d array_like object")
+
+    labels = np.unique(yarr)
+    if labels.shape[0] != 2:
+        raise ValueError("number of classes must be = 2")
+
+    n = yarr.shape[0]
+
+    idx1 = np.where(y==labels[0])[0]
+    idx2 = np.where(y==labels[1])[0]
+    n1 = idx1.shape[0]
+    n2 = idx2.shape[0]
+    
+    K1, K2 = Karr[:, idx1], Karr[:, idx2]
+    
+    N1 = np.dot(np.dot(K1, np.eye(n1) - (1 / float(n1))), K1.T)
+    N2 = np.dot(np.dot(K2, np.eye(n2) - (1 / float(n2))), K2.T)
+    N = N1 + N2 + np.diag(np.repeat(lmb, n))
+
+    M1 = np.sum(K1, axis=1) / float(n1)
+    M2 = np.sum(K2, axis=1) / float(n2)
+    M = M1 - M2
+    
+    coeff = np.linalg.solve(N, M).reshape(-1, 1)
+            
+    return coeff
+ 
+
 def whiten(x):
     """Whitening.
 
-    Returns whitening and de-withening coefficients.
-
-    z = x coeff_M (z = np.dot(x, coeff[:, :M])).
-
-    Cov(z) = I (np.cov(z, rowvar=0))
-
+    Returns whitening and dewhitening coefficients w (P, P)
+    and the corresponding eigenvalues (P) sorted by decreasing 
+    eigenvalue.Each column of `x` represents a variable, while
+    the rows contain observations. 
+    
+    Sample(s) can be whitened by z = x w_M (z = np.dot(x, w[:, :M]))
+    where Cov(z) = I (where Cov(z) = np.cov(z, rowvar=0)).
+    
+    :Parameters:
+       x : 2d numpy array (N, P)
+          data matrix
+          
+    :Returns:
+       w, dw, evals : 2d numpy array (P, P), 2d numpy array (P,P), 1d numpy array (P)
+          whitening coeffs, dewhitening coeff and eigenvalues sorted by 
+          decreasing eigenvalue
     """
 
     xarr = np.asarray(x, dtype=np.float)
@@ -365,6 +429,6 @@ def whiten(x):
     evals = evals[idx]
     
     w = np.dot(np.diag(evals**-0.5), evecs.T).T
-    dw = np.dot(evecs, np.diag(np.sqrt(evals))).T
+    dw = np.dot(evecs, np.diag(np.sqrt(evals))).T # dewhitening coeffs
 
-    return w, dw
+    return w, dw, evals
