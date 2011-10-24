@@ -3,17 +3,88 @@
 Dimensionality Reduction
 ========================
 
+
 Linear Discriminant Analysis (LDA)
 ----------------------------------
 
-.. autofunction:: lda
+.. autoclass:: LDA
+   :members:
+
+Example:
+
+>>> import numpy as np
+>>> import matplotlib.pyplot as plt
+>>> import mlpy
+>>> np.random.seed(0)
+>>> mean1, cov1, n1 = [1, 4.5], [[1,1],[1,2]], 20  # 20 samples of class 1
+>>> x1 = np.random.multivariate_normal(mean1, cov1, n1)
+>>> y1 = np.ones(n1, dtype=np.int)
+>>> mean2, cov2, n2 = [2.5, 2.5], [[1,1],[1,2]], 30 # 30 samples of class 2
+>>> x2 = np.random.multivariate_normal(mean2, cov2, n2)
+>>> y2 = 2 * np.ones(n2, dtype=np.int)
+>>> x = np.concatenate((x1, x2), axis=0) # concatenate the samples
+>>> y = np.concatenate((y1, y2))
+>>> lda = mlpy.LDA()
+>>> lda.learn(x, y) # compute the tranformation matrix
+>>> z = lda.transform(x) # embedded x into the C-1 = 1 dimensional space
 
 
 Fast Linear Discriminant Analysis
 ---------------------------------
 Fast LDA implementation described in [Cai08]_.
 
-.. autofunction:: lda_fast
+.. autoclass:: LDA_FAST
+   :members:
+
+
+Spectral Regression Discriminant Analysis (SRDA)
+------------------------------------------------
+
+.. autoclass:: SRDA
+   :members:
+
+
+Kernel Fisher Discriminant Analysis (KFDA)
+------------------------------------------
+
+.. autoclass:: KFDA
+   :members:
+
+Example - KNN in kernel fisher space:
+
+>>> import numpy as np
+>>> import matplotlib.pyplot as plt
+>>> import mlpy
+>>> np.random.seed(0)
+>>> mean1, cov1, n1 = [1, 4.5], [[1,1],[1,2]], 20  # 20 samples of class 1
+>>> x1 = np.random.multivariate_normal(mean1, cov1, n1)
+>>> y1 = np.ones(n1, dtype=np.int)
+>>> mean2, cov2, n2 = [2.5, 2.5], [[1,1],[1,2]], 30 # 30 samples of class 2
+>>> x2 = np.random.multivariate_normal(mean2, cov2, n2)
+>>> y2 = 2 * np.ones(n2, dtype=np.int)
+>>> x = np.concatenate((x1, x2), axis=0) # concatenate the samples
+>>> y = np.concatenate((y1, y2))
+>>> K = mlpy.kernel_gaussian(x, x, sigma=3) # compute the kernel matrix
+>>> kfda = mlpy.KFDA(lmb=0.01)
+>>> kfda.learn(K, y) # compute the tranformation vector
+>>> z = kfda.transform(K) # embedded x into the kernel fisher space
+>>> knn = mlpy.KNN(k=5)
+>>> knn.learn(z, y) # learn KNN in the kernel fisher space
+>>> xmin, xmax = x[:,0].min()-1, x[:,0].max()+1
+>>> ymin, ymax = x[:,1].min()-1, x[:,1].max()+1
+>>> xx, yy = np.meshgrid(np.arange(xmin, xmax, 0.05), np.arange(ymin, ymax, 0.05))
+>>> xt = np.c_[xx.ravel(), yy.ravel()]
+>>> Kt = mlpy.kernel_gaussian(xt, x, sigma=3) # compute the kernel matrix Kt
+>>> zt = kfda.transform(Kt) # embedded xt into the kernel fisher space
+>>> yt = KNN.pred(zt).reshape(xx.shape) # perform the KNN prediction in the kernel fisher space
+>>> fig = plt.figure(1)
+>>> cmap = plt.set_cmap(plt.cm.Paired)
+>>> plot1 = plt.pcolormesh(xx, yy, yt)
+>>> plot2 = plt.scatter(x[:,0], x[:,1], c=y)
+>>> plt.show()
+
+.. image:: images/kfda.png
+
 
 
 Principal Component Analysis (PCA)
@@ -124,57 +195,6 @@ Whitening
 ---------
 
 .. autofunction:: whiten
-
-
-Spectral Regression Discriminant Analysis (SRDA)
-------------------------------------------------
-
-.. autofunction:: srda
-
-Example:
-	
->>> import numpy as np
->>> import matplotlib.pyplot as plt
->>> import mlpy
->>> np.random.seed(0)
->>> mean1, cov1, n1 = [1, 5], [[1,1],[1,2]], 200  # 200 samples of class 0
->>> x1 = np.random.multivariate_normal(mean1, cov1, n1)
->>> y1 = np.zeros(n1, dtype=np.int)
->>> mean2, cov2, n2 = [2.5, 2.5], [[1,0],[0,1]], 300 # 300 samples of class 1
->>> x2 = np.random.multivariate_normal(mean2, cov2, n2)
->>> y2 = np.ones(n2, dtype=np.int)
->>> mean3, cov3, n3 = [5, 8], [[0.5,0],[0,0.5]], 200 # 200 samples of class 2
->>> x3 = np.random.multivariate_normal(mean3, cov3, n3)
->>> y3 = 2 * np.ones(n3, dtype=np.int)
->>> x = np.concatenate((x1, x2, x3), axis=0) # concatenate the samples
->>> y = np.concatenate((y1, y2, y3))
->>> x -= np.mean(x, axis=0) # center the data
->>> A = mlpy.srda(x, y, alpha=1) # compute the tranformation matrix
->>> A.shape
-(2, 2)
->>> z = np.dot(x, A) # embed x to C-1=2 -dimensional subspace
->>> z.shape
-(700, 2)
->>> plt.set_cmap(plt.cm.Paired)
->>> fig = plt.figure(1)
->>> plot1 = plt.scatter(x[:, 0], x[:, 1], c=y) # plot x
->>> plt.show()
-
-.. image:: images/srda1.png
-
->>> fig = plt.figure(2)
->>> plot2 = plt.scatter(z[:, 0], z[:, 1], c=y) # plot z
->>> plt.show()
-
-.. image:: images/srda2.png
-
-
-Kernel Fisher Discriminant Analysis (KFDA)
-------------------------------------------
-
-.. autofunction:: kfda
-
-
 
 
 .. [Cai08] D Cai, X He, J Han. SRDA: An Efficient Algorithm for Large-Scale Discriminant Analysis. Knowledge and Data Engineering, IEEE Transactions on Volume 20, Issue 1, Jan. 2008 Page(s):1 - 12.

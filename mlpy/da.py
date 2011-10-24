@@ -16,11 +16,11 @@
 
 import numpy as np
 
-__all__ = ['LDA', 'DLDA']
+__all__ = ['LDAC', 'DLDA']
 
 
-class LDA:
-    """Linear Discriminant Analysis classifier.
+class LDAC:
+    """Linear Discriminant Analysis Classifier.
     """
     
     def __init__(self):

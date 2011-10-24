@@ -21,8 +21,8 @@ from ols import ols_base
 import kernel
 
 
-__all__ = ['lda', 'lda_fast', 'pca', 'kpca', 'pca_fast', 'srda',
-           'kfda', 'whiten']
+__all__ = ['LDA', 'LDA_FAST', 'SRDA', 'KFDA', 'pca', 'kpca', 'pca_fast',
+           'whiten']
 
 
 def proj(u, v):
@@ -45,15 +45,15 @@ def gso(v, norm=False):
             v[j] /= np.linalg.norm(v[j])
 
 
-def lda(x, y):
+def lda(xarr, yarr):
     """Linear Discriminant Analysis.
     
     Returns the transformation matrix `coeff` (P, C-1),
     where `x` is a matrix (N,P) and C is the number of
     classes. Each column of `x` represents a variable, 
-    while the rows contain observations. 
-    Each column of `coeff` contains coefficients 
-    for one transformation vector.
+    while the rows contain observations. Each column of 
+    `coeff` contains coefficients for one transformation
+    vector.
     
     Sample(s) can be embedded into the C-1 dimensional space
     by z = x coeff (z = np.dot(x, coeff)).
@@ -65,28 +65,16 @@ def lda(x, y):
           class labels
     
     :Returns:
-       coeff: 2d numpy array (P, P), 1d numpy array (P)
+       coeff: 2d numpy array (P, P)
           transformation matrix.
     """
-
-    xarr = np.asarray(x, dtype=np.float)
-    yarr = np.asarray(y, dtype=np.int)
-
-    if xarr.ndim != 2:
-        raise ValueError("x must be a 2d array_like object")
-    
-    if yarr.ndim != 1:
-        raise ValueError("y must be an 1d array_like object")
-    
-    if xarr.shape[0] != yarr.shape[0]:
-        raise ValueError("x, y shape mismatch")
 
     n, p = xarr.shape[0], xarr.shape[1]
     labels = np.unique(yarr)
     
     sw = np.zeros((p, p), dtype=np.float)   
     for i in labels:
-        idx = np.where(y==i)[0]
+        idx = np.where(yarr==i)[0]
         sw += np.cov(xarr[idx], rowvar=0) * \
             (idx.shape[0] - 1)
     st = np.cov(xarr, rowvar=0) * (n - 1)
@@ -101,13 +89,15 @@ def lda(x, y):
     return evecs
 
 
-def srda(x, y, alpha):
+def srda(xarr, yarr, alpha):
     """Spectral Regression Discriminant Analysis.
 
     Returns the (P, C-1) transformation matrix, where 
     `x` is a matrix (N,P) and C is the number of classes.
     Each column of `x` represents a variable, while the 
-    rows contain observations.
+    rows contain observations. `x` must be centered 
+    (subtracting the empirical mean vector from each column 
+    of`x`).
 
     Sample(s) can be embedded into the C-1 dimensional space
     by z = x coeff (z = np.dot(x, coeff)).
@@ -125,33 +115,19 @@ def srda(x, y, alpha):
           tranformation matrix
     """
 
-    xarr = np.asarray(x, dtype=np.float)
-    yarr = np.asarray(y, dtype=np.int)
-    
-    if xarr.ndim != 2:
-        raise ValueError("x must be a 2d array_like object")
-    
-    if yarr.ndim != 1:
-        raise ValueError("y must be an 1d array_like object")
-    
-    if xarr.shape[0] != yarr.shape[0]:
-        raise ValueError("x, y shape mismatch")
-
-    xmean = np.mean(xarr, axis=0)
-
     # Point 1 in section 4.2
     yu = np.unique(yarr)
     yk = np.zeros((yu.shape[0]+1, yarr.shape[0]), dtype=np.float)
     yk[0] = 1.
     for i in range(1, yk.shape[0]):
-        yk[i][y==yu[i-1]] = 1.
+        yk[i][yarr==yu[i-1]] = 1.
     gso(yk, norm=False) # orthogonalize yk
     yk = yk[1:-1]
     
     # Point 2 in section 4.2
     ak = np.empty((yk.shape[0], xarr.shape[1]), dtype=np.float)
     for i in range(yk.shape[0]):
-        ak[i] = ridge_base(xarr-xmean, yk[i], alpha)
+        ak[i] = ridge_base(xarr, yk[i], alpha)
 
     return ak.T
 
@@ -251,18 +227,15 @@ def pca_fast(x, m, eps=0.01):
     return evecs.T
       
 
-def lda_fast(x, y):
+def lda_fast(xarr, yarr):
     """Fast implementation of Linear Discriminant Analysis.
     
     Returns the (P, C-1) transformation matrix, where 
-    `x` is a matrix (N,P) and C is the number of classes.
+    `x` is a centered matrix (N,P) and C is the number of classes.
     Each column of `x` represents a variable, while the 
     rows contain observations. `x` must be centered 
     (subtracting the empirical mean vector from each column 
     of`x`).
-
-    Sample(s) can be embedded into the C-1 dimensional space
-    by z = x coeff (z = np.dot(x, coeff)).
 
     :Parameters:
        x : 2d array_like object
@@ -275,31 +248,17 @@ def lda_fast(x, y):
           tranformation matrix
     """
 
-    xarr = np.asarray(x, dtype=np.float)
-    yarr = np.asarray(y, dtype=np.int)
-    
-    if xarr.ndim != 2:
-        raise ValueError("x must be a 2d array_like object")
-    
-    if yarr.ndim != 1:
-        raise ValueError("y must be an 1d array_like object")
-    
-    if xarr.shape[0] != yarr.shape[0]:
-        raise ValueError("x, y shape mismatch")
-        
-    xmean = np.mean(xarr, axis=0)
-
     yu = np.unique(yarr)
     yk = np.zeros((yu.shape[0]+1, yarr.shape[0]), dtype=np.float)
     yk[0] = 1.
     for i in range(1, yk.shape[0]):
-        yk[i][y==yu[i-1]] = 1.
+        yk[i][yarr==yu[i-1]] = 1.
     gso(yk, norm=False) # orthogonalize yk
     yk = yk[1:-1]
     
     ak = np.empty((yk.shape[0], xarr.shape[1]), dtype=np.float)
     for i in range(yk.shape[0]):
-        ak[i], _ = ols_base(xarr - xmean, yk[i], -1)
+        ak[i], _ = ols_base(xarr, yk[i], -1)
 
     return ak.T
 
@@ -340,17 +299,14 @@ def kpca(K):
     return evecs, evals
 
 
-def kfda(K, y, lmb=0.001):
+def kfda(Karr, yarr, lmb=0.001):
     """Kernel Fisher Discriminant Analysis.
     
     Returns the transformation matrix `coeff` (N,1),
     where `K` is a the kernel matrix (N,N) and y
     is the class labels (the alghoritm works only with 2
     classes).
-    
-    Sample(s) can be embedded into the Kernel Fisher
-    space by z = K coeff (z = np.dot(K, coeff)).
-
+   
     :Parameters:
        K: 2d array_like object (N, N)
           precomputed kernel matrix
@@ -362,22 +318,13 @@ def kfda(K, y, lmb=0.001):
     :Returns:
        coeff: 2d numpy array (N,1)
           kernel fisher coefficients.
-    """
-
-    Karr = np.array(K, dtype=np.float)
-
-    yarr = np.asarray(y, dtype=np.int)
-    if yarr.ndim != 1:
-        raise ValueError("y must be an 1d array_like object")
+    """  
 
     labels = np.unique(yarr)
-    if labels.shape[0] != 2:
-        raise ValueError("number of classes must be = 2")
-
     n = yarr.shape[0]
 
-    idx1 = np.where(y==labels[0])[0]
-    idx2 = np.where(y==labels[1])[0]
+    idx1 = np.where(yarr==labels[0])[0]
+    idx2 = np.where(yarr==labels[1])[0]
     n1 = idx1.shape[0]
     n2 = idx2.shape[0]
     
@@ -432,3 +379,238 @@ def whiten(x):
     dw = np.dot(evecs, np.diag(np.sqrt(evals))).T # dewhitening coeffs
 
     return w, dw, evals
+
+
+
+class LDA:
+    """Linear Discriminant Analysis.
+    """
+    
+    def __init__(self):
+        """Initialization.
+        """
+        
+        self._coeff = None
+        self._mean = None
+
+    def learn(self, x, y):
+        """Computes the transformation matrix.
+        `x` is a matrix (N,P) and `y` is a vector containing
+        the class labels. Each column of `x` represents a 
+        variable, while the rows contain observations.
+        """
+
+        xarr = np.asarray(x, dtype=np.float)
+        yarr = np.asarray(y, dtype=np.int)
+        
+        if xarr.ndim != 2:
+            raise ValueError("x must be a 2d array_like object")
+        
+        if yarr.ndim != 1:
+            raise ValueError("y must be an 1d array_like object")
+        
+        if xarr.shape[0] != yarr.shape[0]:
+            raise ValueError("x, y shape mismatch")
+        
+        self._mean = np.mean(xarr, axis=0)
+        self._coeff = lda(xarr, yarr)
+
+    def transform(self, t):
+        """Embedded t (M,P) into the C-1 dimensional space.
+        Returns a (M,C-1) matrix.
+        """
+        if self._coeff is None:
+            raise ValueError("no model computed")
+
+        tarr = np.asarray(t, dtype=np.float)
+        
+        try:
+            return np.dot(tarr-self._mean, self._coeff)
+        except:
+            ValueError("t, coeff: shape mismatch")
+
+    def coeff(self):
+        """Returns the tranformation matrix (P,C-1), where
+        C is the number of classes. Each column contains 
+        coefficients for one transformation vector.
+        """
+
+        return self._coeff
+ 
+
+class LDA_FAST:
+    """Fast implementation of Linear Discriminant Analysis.
+    """
+    
+    def __init__(self):
+        """Initialization.
+        """
+        
+        self._coeff = None
+        self._mean = None
+
+    def learn(self, x, y):
+        """Computes the transformation matrix.
+        `x` is a matrix (N,P) and `y` is a vector containing
+        the class labels. Each column of `x` represents a 
+        variable, while the rows contain observations.
+        """
+
+        xarr = np.asarray(x, dtype=np.float)
+        yarr = np.asarray(y, dtype=np.int)
+        
+        if xarr.ndim != 2:
+            raise ValueError("x must be a 2d array_like object")
+        
+        if yarr.ndim != 1:
+            raise ValueError("y must be an 1d array_like object")
+        
+        if xarr.shape[0] != yarr.shape[0]:
+            raise ValueError("x, y shape mismatch")
+        
+        self._mean = np.mean(xarr, axis=0)
+        self._coeff = lda_fast(xarr-self._mean, yarr)
+
+    def transform(self, t):
+        """Embedded t (M,P) into the C-1 dimensional space.
+        Returns a (M,C-1) matrix.
+        """
+        if self._coeff is None:
+            raise ValueError("no model computed")
+
+        tarr = np.asarray(t, dtype=np.float)
+        
+        try:
+            return np.dot(tarr-self._mean, self._coeff)
+        except:
+            ValueError("t, coeff: shape mismatch")
+
+    def coeff(self):
+        """Returns the tranformation matrix (P,C-1), where
+        C is the number of classes. Each column contains 
+        coefficients for one transformation vector.
+        """
+
+        return self._coeff
+
+
+class SRDA:
+    """Spectral Regression Discriminant Analysis.
+    """
+    
+    def __init__(self, alpha=0.001):
+        """Initialization.
+
+        :Parameters:
+           alpha : float (>=0)
+              regularization parameter
+        """
+        
+        self._coeff = None
+        self._mean = None
+        self._alpha = alpha
+
+    def learn(self, x, y):
+        """Computes the transformation matrix.
+        `x` is a matrix (N,P) and `y` is a vector containing
+        the class labels. Each column of `x` represents a 
+        variable, while the rows contain observations.
+        """
+
+        xarr = np.asarray(x, dtype=np.float)
+        yarr = np.asarray(y, dtype=np.int)
+        
+        if xarr.ndim != 2:
+            raise ValueError("x must be a 2d array_like object")
+        
+        if yarr.ndim != 1:
+            raise ValueError("y must be an 1d array_like object")
+        
+        if xarr.shape[0] != yarr.shape[0]:
+            raise ValueError("x, y shape mismatch")
+        
+        self._mean = np.mean(xarr, axis=0)
+        self._coeff = srda(xarr-self._mean, yarr, self._alpha)
+
+    def transform(self, t):
+        """Embedded t (M,P) into the C-1 dimensional space.
+        Returns a (M,C-1) matrix.
+        """
+
+        if self._coeff is None:
+            raise ValueError("no model computed")
+
+        tarr = np.asarray(t, dtype=np.float)
+        
+        try:
+            return np.dot(tarr-self._mean, self._coeff)
+        except:
+            ValueError("t, coeff: shape mismatch")
+
+    def coeff(self):
+        """Returns the tranformation matrix (P,C-1), where
+        C is the number of classes. Each column contains 
+        coefficients for one transformation vector.
+        """
+
+        return self._coeff
+
+
+class KFDA:
+    """Kernel Fisher Discriminant Analysis.
+    """
+    
+    def __init__(self, lmb=0.001):
+        """Initialization.
+        
+        :Parameters:
+           lmb : float (>= 0.0)
+              regularization parameter
+        """
+        
+        self._coeff = None
+        self._lmb = lmb
+
+    def learn(self, K, y):
+        """Computes the transformation vector.
+        `K` is a the kernel matrix (N,N) and `y` contains 
+        the class labels (the algorithm works only with 2
+        classes).
+        """
+
+        Karr = np.array(K, dtype=np.float)
+        yarr = np.asarray(y, dtype=np.int)
+        if yarr.ndim != 1:
+            raise ValueError("y must be an 1d array_like object")
+
+        labels = np.unique(yarr)
+        if labels.shape[0] != 2:
+            raise ValueError("number of classes must be = 2")
+        
+        self._coeff = kfda(Karr, yarr, self._lmb)
+
+    def transform(self, Kt):
+        """Embedded Kt (M,N) into the 1 dimensional space.
+        Returns a (M,1) matrix.
+        """
+
+        if self._coeff is None:
+            raise ValueError("no model computed")
+
+        Ktarr = np.asarray(Kt, dtype=np.float)
+        
+        try:
+            return np.dot(Kt, self._coeff)
+        except:
+            ValueError("Kt, coeff: shape mismatch")
+
+    def coeff(self):
+        """Returns the tranformation vector (N,1).
+        """
+
+        return self._coeff
+
+
+
+    
+            

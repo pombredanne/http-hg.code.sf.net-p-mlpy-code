@@ -108,7 +108,7 @@ class Perceptron:
         """
 
         if self._weights is None:
-            raise ValueError("no model computed.")
+            raise ValueError("no model computed")
 
         xarr = np.asarray(x, dtype=np.float)
         if xarr.ndim > 2:
@@ -126,7 +126,7 @@ class Perceptron:
         """
 
         if self._weights is None:
-            raise ValueError("no model computed.")
+            raise ValueError("no model computed")
 
         return self._weights
 

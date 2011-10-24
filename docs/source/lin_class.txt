@@ -3,11 +3,11 @@
 Linear Methods for Classification
 =================================
 
-Linear Discriminant Analysis (LDA)
-----------------------------------
+Linear Discriminant Analysis Classifier (LDA-C)
+-----------------------------------------------
 See [Hastie09]_, page 106.
 
-.. autoclass:: LDA
+.. autoclass:: LDAC
    :members:
 
 
@@ -28,12 +28,12 @@ Binary classification:
 >>> y2 = -np.ones(n2, dtype=np.int)
 >>> x = np.concatenate((x1, x2), axis=0) # concatenate the samples
 >>> y = np.concatenate((y1, y2))
->>> lda = mlpy.LDA()
->>> lda.learn(x, y)
->>> w = lda.weights()
+>>> ldac = mlpy.LDAC()
+>>> ldac.learn(x, y)
+>>> w = ldac.weights()
 >>> w
 array([  9.35004277, -11.19030118])
->>> b = lda.bias()
+>>> b = ldac.bias()
 >>> b
 26.333215226960807
 >>> xx = np.arange(np.min(x[:,0]), np.max(x[:,0]), 0.01)
@@ -46,9 +46,9 @@ array([  9.35004277, -11.19030118])
 .. image:: images/lda_binary.png
 
 >>> test = [[0, 2], [4, 2]] # test points
->>> lda.pred(test)
+>>> ldac.pred(test)
 array([-1, -1])
->>> lda.labels()
+>>> ldac.labels()
 array([-1,  1])
 
 Multiclass classification:
@@ -68,15 +68,15 @@ Multiclass classification:
 >>> y3 = 2 * np.ones(n3, dtype=np.int)
 >>> x = np.concatenate((x1, x2, x3), axis=0) # concatenate the samples
 >>> y = np.concatenate((y1, y2, y3))
->>> lda = mlpy.LDA()
->>> lda.learn(x, y)
->>> w = lda.weights()
->>> w # w[i]: weights for label lda.labels()[i]
+>>> ldac = mlpy.LDAC()
+>>> ldac.learn(x, y)
+>>> w = ldac.weights()
+>>> w # w[i]: weights for label ldac.labels()[i]
 array([[-12.57833092,  16.69761893],
        [  0.29608683,   1.93709193],
        [ -8.45786668,  15.36183788]])
->>> b = lda.bias()
->>> b # b[i]: bias for label lda.labels()[i]
+>>> b = ldac.bias()
+>>> b # b[i]: bias for label ldac.labels()[i]
 array([-37.23969563,  -3.57952642, -41.13090751])
 >>> xx = np.arange(np.min(x[:,0]), np.max(x[:,0]), 0.01)
 >>> yy1 = (xx* (w[1][0]-w[0][0]) + b[1] - b[0]) / (w[0][1]-w[1][1])
@@ -92,9 +92,9 @@ array([-37.23969563,  -3.57952642, -41.13090751])
 .. image:: images/lda_multi.png
 
 >>> test = [[6,7], [4, 2]] # test points
->>> lda.pred(test)
+>>> ldac.pred(test)
 array([2, 1])
->>> lda.labels()
+>>> ldac.labels()
 array([0, 1, 2])
 
 
