@@ -21,8 +21,7 @@ from ols import ols_base
 import kernel
 
 
-__all__ = ['LDA', 'LDA_FAST', 'SRDA', 'KFDA', 'pca', 'kpca', 'pca_fast',
-           'whiten']
+__all__ = ['LDA', 'SRDA', 'KFDA', 'PCA', 'PCAFast', 'KPCA']
 
 
 def proj(u, v):
@@ -132,47 +131,56 @@ def srda(xarr, yarr, alpha):
     return ak.T
 
 
-def pca(x):
+def pca(xarr, method='svd'):
     """Principal Component Analysis.
     
-    Returns the principal component coefficients `coeff`
-    (P, P) and the corresponding eigenvalues (P) of the 
-    covariance matrix of `x` (N,P) sorted by decreasing 
-    eigenvalue. Each column of `x` represents a variable,  
-    while the rows contain observations. Each column of 
-    `coeff` contains coefficients for one principal 
-    component.
+    Returns the principal component coefficients `coeff`(K,K) 
+    and the corresponding eigenvalues (K) of the covariance 
+    matrix of `x` (N,P) sorted by decreasing eigenvalue, where 
+    K=min(N,P). Each column of `x` represents a variable,  
+    while the rows contain observations. Each column of `coeff` 
+    contains coefficients for one principal component.
     
-    Sample(s) can be embedded into the M (<=P) dimensional space
-    by z = x coeff_M (z = np.dot(x, coeff[:, :M])).
+    Sample(s) can be embedded into the M (<=K) dimensional
+    space by z = x coeff_M (z = np.dot(x, coeff[:, :M])).
 
     :Parameters:
        x : 2d numpy array (N, P)
           data matrix
+       method : str
+          'svd' or 'cov'
     
     :Returns:
-       coeff, evals : 2d numpy array (P, P), 1d numpy array (P)
+       coeff, evals : 2d numpy array (K, K), 1d numpy array (K)
           principal component coefficients (eigenvectors of
           the covariance matrix of x) and eigenvalues sorted by 
-          decreasing eigenvalue
+          decreasing eigenvalue.
     """
 
 
-    xarr = np.asarray(x, dtype=np.float)
-
-    if xarr.ndim != 2:
-        raise ValueError("x must be a 2d array_like object")
-
-    C = np.cov(xarr, rowvar=0)
-    evals, evecs = np.linalg.eigh(C)
-    idx = np.argsort(evals)[::-1]
-    evecs = evecs[:, idx]
-    evals = evals[idx]
+    n, p = xarr.shape
     
+    if method == 'svd':
+        x_h = (xarr - np.mean(xarr, axis=0)) / np.sqrt(n - 1)
+        u, s, v = np.linalg.svd(x_h.T, full_matrices=False)
+        evecs = u
+        evals = s**2
+    elif method == 'cov':
+        k = np.min((n, p))
+        C = np.cov(xarr, rowvar=0)
+        evals, evecs = np.linalg.eigh(C)
+        idx = np.argsort(evals)[::-1]
+        evecs = evecs[:, idx]
+        evals = evals[idx]
+        evecs = evecs[:, :k]
+        evals = evals[:k]
+    else:
+        raise ValueError("method must be 'svd' or 'cov'")
+
     return evecs, evals
+        
 
-
-def pca_fast(x, m, eps=0.01):
+def pca_fast(xarr, m, eps):
     """Fast principal component analysis using the fixed-point
     algorithm.
     
@@ -197,10 +205,6 @@ def pca_fast(x, m, eps=0.01):
           principal component coefficients
     """
     
-    xarr = np.asarray(x, dtype=np.float)
-    if xarr.ndim != 2:
-        raise ValueError("x must be a 2d array_like object")
-
     m = int(m)
 
     np.random.seed(0)
@@ -343,55 +347,25 @@ def kfda(Karr, yarr, lmb=0.001):
     return coeff
  
 
-def whiten(x):
-    """Whitening.
-
-    Returns whitening and dewhitening coefficients w (P, P)
-    and the corresponding eigenvalues (P) sorted by decreasing 
-    eigenvalue.Each column of `x` represents a variable, while
-    the rows contain observations. 
-    
-    Sample(s) can be whitened by z = x w_M (z = np.dot(x, w[:, :M]))
-    where Cov(z) = I (where Cov(z) = np.cov(z, rowvar=0)).
-    
-    :Parameters:
-       x : 2d numpy array (N, P)
-          data matrix
-          
-    :Returns:
-       w, dw, evals : 2d numpy array (P, P), 2d numpy array (P,P), 1d numpy array (P)
-          whitening coeffs, dewhitening coeff and eigenvalues sorted by 
-          decreasing eigenvalue
-    """
-
-    xarr = np.asarray(x, dtype=np.float)
-
-    if xarr.ndim != 2:
-        raise ValueError("x must be a 2d array_like object")
-
-    C = np.cov(xarr, rowvar=0)
-    evals, evecs = np.linalg.eigh(C)
-    idx = np.argsort(evals)[::-1]
-    evecs = evecs[:, idx]
-    evals = evals[idx]
-    
-    w = np.dot(np.diag(evals**-0.5), evecs.T).T
-    dw = np.dot(evecs, np.diag(np.sqrt(evals))).T # dewhitening coeffs
-
-    return w, dw, evals
-
-
-
 class LDA:
     """Linear Discriminant Analysis.
     """
     
-    def __init__(self):
+    def __init__(self, method='cov'):
         """Initialization.
+        
+        :Parameters:
+           method : str
+              'cov' or 'fast'
         """
         
         self._coeff = None
         self._mean = None
+
+        if method not in ['cov', 'fast']:
+            raise ValueError("method must be 'cov' or 'fast'")
+
+        self._method = method
 
     def learn(self, x, y):
         """Computes the transformation matrix.
@@ -413,66 +387,14 @@ class LDA:
             raise ValueError("x, y shape mismatch")
         
         self._mean = np.mean(xarr, axis=0)
-        self._coeff = lda(xarr, yarr)
+        
+        if self._method == 'cov':
+            self._coeff = lda(xarr, yarr)
+        elif self._method == 'fast':
+            self._coeff = lda_fast(xarr-self._mean, yarr)
 
     def transform(self, t):
-        """Embedded t (M,P) into the C-1 dimensional space.
-        Returns a (M,C-1) matrix.
-        """
-        if self._coeff is None:
-            raise ValueError("no model computed")
-
-        tarr = np.asarray(t, dtype=np.float)
-        
-        try:
-            return np.dot(tarr-self._mean, self._coeff)
-        except:
-            ValueError("t, coeff: shape mismatch")
-
-    def coeff(self):
-        """Returns the tranformation matrix (P,C-1), where
-        C is the number of classes. Each column contains 
-        coefficients for one transformation vector.
-        """
-
-        return self._coeff
- 
-
-class LDA_FAST:
-    """Fast implementation of Linear Discriminant Analysis.
-    """
-    
-    def __init__(self):
-        """Initialization.
-        """
-        
-        self._coeff = None
-        self._mean = None
-
-    def learn(self, x, y):
-        """Computes the transformation matrix.
-        `x` is a matrix (N,P) and `y` is a vector containing
-        the class labels. Each column of `x` represents a 
-        variable, while the rows contain observations.
-        """
-
-        xarr = np.asarray(x, dtype=np.float)
-        yarr = np.asarray(y, dtype=np.int)
-        
-        if xarr.ndim != 2:
-            raise ValueError("x must be a 2d array_like object")
-        
-        if yarr.ndim != 1:
-            raise ValueError("y must be an 1d array_like object")
-        
-        if xarr.shape[0] != yarr.shape[0]:
-            raise ValueError("x, y shape mismatch")
-        
-        self._mean = np.mean(xarr, axis=0)
-        self._coeff = lda_fast(xarr-self._mean, yarr)
-
-    def transform(self, t):
-        """Embedded t (M,P) into the C-1 dimensional space.
+        """Embed `t` (M,P) into the C-1 dimensional space.
         Returns a (M,C-1) matrix.
         """
         if self._coeff is None:
@@ -533,7 +455,7 @@ class SRDA:
         self._coeff = srda(xarr-self._mean, yarr, self._alpha)
 
     def transform(self, t):
-        """Embedded t (M,P) into the C-1 dimensional space.
+        """Embed t (M,P) into the C-1 dimensional space.
         Returns a (M,C-1) matrix.
         """
 
@@ -590,7 +512,7 @@ class KFDA:
         self._coeff = kfda(Karr, yarr, self._lmb)
 
     def transform(self, Kt):
-        """Embedded Kt (M,N) into the 1 dimensional space.
+        """Embed Kt (M,N) into the 1 dimensional space.
         Returns a (M,1) matrix.
         """
 
@@ -611,6 +533,247 @@ class KFDA:
         return self._coeff
 
 
-
+class PCA:
+    """Principal Component Analysis.
+    """
     
+    def __init__(self, method='svd', whiten=False):
+        """Initialization.
+        
+        :Parameters:
+           method : str
+              method, 'svd' or 'cov'
+           whiten : bool
+              whitening. The eigenvectors will be scaled
+              by eigenvalues**-(1/2)
+        """
+        
+        self._coeff = None
+        self._coeff_inv = None
+        self._evals = None
+        self._mean = None
+        self._method = method
+        self._whiten = whiten        
+
+    def learn(self, x):
+        """Compute the principal component coefficients.
+        `x` is a matrix (N,P). Each column of `x` represents a 
+        variable, while the rows contain observations.
+        """
+
+        xarr = np.asarray(x, dtype=np.float)
+        if xarr.ndim != 2:
+            raise ValueError("x must be a 2d array_like object")
+        
+        self._mean = np.mean(xarr, axis=0)
+        self._coeff, self._evals = pca(x, method='svd')
+
+        if self._whiten:
+            self._coeff_inv = np.empty((self._coeff.shape[1], 
+                self._coeff.shape[0]), dtype=np.float)
             
+            for i in range(len(self._evals)):
+                eval_sqrt = np.sqrt(self._evals[i])
+                self._coeff_inv[i] = self._coeff[:, i] * \
+                    eval_sqrt
+                self._coeff[:, i] /= eval_sqrt
+        else:
+            self._coeff_inv = self._coeff.T
+
+    def transform(self, t, k=None):
+        """Embed `t` (M,P) into the k dimensional subspace.
+        Returns a (M,K) matrix. If `k` =None will be set to 
+        min(N,P)
+        """
+
+        if self._coeff is None:
+            raise ValueError("no PCA computed")
+        
+        if k == None:
+            k = self._coeff.shape[1]
+
+        if k < 1 or k > self._coeff.shape[1]:
+            raise ValueError("k must be in [1, %d] or None" % \
+                                 self._coeff.shape[1])
+
+        tarr = np.asarray(t, dtype=np.float)
+
+        try:
+            return np.dot(tarr-self._mean, self._coeff[:, :k])
+        except:
+            raise ValueError("t, coeff: shape mismatch")
+            
+    def transform_inv(self, z):
+        """Transform data back to its original space,
+        where `z` is a (M,K) matrix. Returns a (M,P) matrix.
+        """
+
+        if self._coeff is None:
+            raise ValueError("no PCA computed")
+
+        zarr = np.asarray(z, dtype=np.float)
+
+        return np.dot(zarr, self._coeff_inv[:zarr.shape[1]]) +\
+            self._mean
+        
+    def coeff(self):
+        """Returns the tranformation matrix (P,L), where
+        L=min(N,P), sorted by decreasing eigenvalue.
+        Each column contains coefficients for one principal 
+        component.
+        """
+        
+        return self._coeff
+    
+    def coeff_inv(self):
+        """Returns the inverse of tranformation matrix (L,P),
+        where L=min(N,P), sorted by decreasing eigenvalue.
+        """
+        
+        return self._coeff_inv
+
+    def evals(self):
+        """Returns sorted eigenvalues (L), where L=min(N,P).
+        """
+        
+        return self._evals
+
+
+class PCAFast:
+    """Fast Principal Component Analysis.
+    """
+    
+    def __init__(self, k=2, eps=0.01):
+        """Initialization.
+        
+        :Parameters:
+           k : integer
+              the number of principal axes or eigenvectors required
+           eps : float (> 0)
+              tolerance error
+        """
+        
+        self._coeff = None
+        self._coeff_inv = None
+        self._mean = None
+        self._k = k
+        self._eps = eps        
+
+    def learn(self, x):
+        """Compute the firsts `k` principal component coefficients.
+        `x` is a matrix (N,P). Each column of `x` represents a 
+        variable, while the rows contain observations.
+        """
+
+        xarr = np.asarray(x, dtype=np.float)
+        if xarr.ndim != 2:
+            raise ValueError("x must be a 2d array_like object")
+        
+        self._mean = np.mean(xarr, axis=0)
+        self._coeff = pca_fast(xarr, m=self._k, eps=self._eps)
+        self._coeff_inv = self._coeff.T
+
+    def transform(self, t):
+        """Embed t (M,P) into the `k` dimensional subspace.
+        Returns a (M,K) matrix.
+        """
+
+        if self._coeff is None:
+            raise ValueError("no PCA computed")
+
+        tarr = np.asarray(t, dtype=np.float)
+
+        try:
+            return np.dot(tarr-self._mean, self._coeff)
+        except:
+            raise ValueError("t, coeff: shape mismatch")
+            
+    def transform_inv(self, z):
+        """Transform data back to its original space,
+        where `z` is a (M,K) matrix. Returns a (M,P) matrix.
+        """
+
+        if self._coeff is None:
+            raise ValueError("no PCA computed")
+
+        zarr = np.asarray(z, dtype=np.float)
+        return np.dot(zarr, self._coeff_inv) + self._mean
+        
+    def coeff(self):
+        """Returns the tranformation matrix (P,K) sorted by 
+        decreasing eigenvalue.
+        Each column contains coefficients for one principal 
+        component.
+        """
+        
+        return self._coeff
+    
+    def coeff_inv(self):
+        """Returns the inverse of tranformation matrix (K,P),
+        sorted by decreasing eigenvalue.
+        """
+        
+        return self._coeff_inv
+
+
+class KPCA:
+    """Kernel Principal Component Analysis.
+    """
+    
+    def __init__(self):
+        """Initialization.
+        """
+        
+        self._coeff = None
+        self._evals = None
+        self._K = None
+
+    def learn(self, K):
+        """Compute the kernel principal component coefficients.
+        `K` is the kernel matrix (N,N).
+        """
+
+        Karr = np.asarray(K, dtype=np.float)
+        if Karr.ndim != 2:
+            raise ValueError("K must be a 2d array_like object")
+        
+        self._K = Karr.copy()
+        Karr = kernel.kernel_center(Karr, Karr)
+        self._coeff, self._evals = kpca(Karr)
+       
+    def transform(self, Kt, k=None):
+        """Embed Kt (M,N) into the `k` dimensional subspace.
+        Returns a (M,K) matrix.
+        """
+
+        if self._coeff is None:
+            raise ValueError("no KPCA computed")
+        
+        if k == None:
+            k = self._coeff.shape[1]
+
+        if k < 1 or k > self._coeff.shape[1]:
+            raise ValueError("k must be in [1, %d] or None" % \
+                                 self._coeff.shape[1])
+
+        Ktarr = np.asarray(Kt, dtype=np.float)
+        Ktarr = kernel.kernel_center(Ktarr, self._K)
+
+        try:
+            return np.dot(Ktarr, self._coeff[:, :k])
+        except:
+            raise ValueError("Kt, coeff: shape mismatch")
+ 
+    def coeff(self):
+        """Returns the tranformation matrix (N,N) sorted by 
+        decreasing eigenvalue.
+        """
+        
+        return self._coeff
+    
+    def evals(self):
+        """Returns sorted eigenvalues (N).
+        """
+        
+        return self._evals
+   

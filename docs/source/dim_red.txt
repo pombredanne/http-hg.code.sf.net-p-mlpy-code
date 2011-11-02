@@ -29,14 +29,6 @@ Example:
 >>> z = lda.transform(x) # embedded x into the C-1 = 1 dimensional space
 
 
-Fast Linear Discriminant Analysis
----------------------------------
-Fast LDA implementation described in [Cai08]_.
-
-.. autoclass:: LDA_FAST
-   :members:
-
-
 Spectral Regression Discriminant Analysis (SRDA)
 ------------------------------------------------
 
@@ -90,19 +82,96 @@ Example - KNN in kernel fisher space:
 Principal Component Analysis (PCA)
 ----------------------------------
 
-.. autofunction:: pca
-
-
-Kernel Principal Component Analysis (KPCA)
-------------------------------------------
-
-.. autofunction:: kpca
+.. autoclass:: PCA
+   :members:
 
 Example:
 
 >>> import numpy as np
 >>> import matplotlib.pyplot as plt
 >>> import mlpy
+>>> np.random.seed(0)
+>>> mean, cov, n = [0, 0], [[1,1],[1,1.5]], 100
+>>> x = np.random.multivariate_normal(mean, cov, n)
+>>> pca.learn(x)
+>>> coeff = pca.coeff()
+>>> fig = plt.figure(1) # plot
+>>> plot1 = plt.plot(x[:, 0], x[:, 1], 'o')
+>>> plot2 = plt.plot([0,coeff[0, 0]], [0, coeff[1, 0]], linewidth=4, color='r') # first PC
+>>> plot3 = plt.plot([0,coeff[0, 1]], [0, coeff[1, 1]], linewidth=4, color='g') # second PC
+>>> xx = plt.xlim(-4, 4)
+>>> yy = plt.ylim(-4, 4)
+>>> plt.show()
+
+.. image:: images/pca.png
+
+>>> z = pca.transform(x, k=1) # transform x using the first PC
+>>> xnew = pca.transform_inv(z) # transform data back to its original space
+>>> fig2 = plt.figure(2) # plot
+>>> plot1 = plt.plot(xnew[:, 0], xnew[:, 1], 'o')
+>>> xx = plt.xlim(-4, 4)
+>>> yy = plt.ylim(-4, 4)
+>>> plt.show()
+
+.. image:: images/pca2.png
+
+Fast Principal Component Analysis (PCAFast)
+-------------------------------------------
+Fast PCA implementation described in [Sharma07]_.
+
+.. autoclass:: PCAFast
+   :members:
+
+Example reproducing Figure 1 of [Sharma07]_:
+
+>>> import numpy as np
+>>> import matplotlib.pyplot as plt
+>>> import mlpy
+>>> np.random.seed(0)
+>>> h = 10 # dimension reduced to h=10
+>>> n = 100 # number of samples
+>>> d = np.array([100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000, 3000, 4000]) # number of dimensions
+>>> mse_eig, mse_fast = np.zeros(len(d)), np.zeros(len(d))
+>>> pca = mlpy.PCA(method='cov') # pca (eigenvalue decomposition)
+>>> pca_fast=  mlpy.PCAFast(k=h) # fast pca
+>>> for i in range(d.shape[0]):
+...     x = np.random.rand(n, d[i])
+...     pca.learn(x) # pca (eigenvalue decomposition)
+...     y_eig = pca.transform(x, k=h) # reduced dimensional feature vectors
+...     xhat_eig = pca.transform_inv(y_eig) # reconstructed vector 
+...     pca_fast.learn(x) # pca (eigenvalue decomposition)
+...     y_fast = pca_fast.transform(x) # reduced dimensional feature vectors
+...     xhat_fast = pca_fast.transform_inv(y_fast) # reconstructed vector 
+...     for j in range(n):
+...         mse_eig[i] += np.sum((x[j] - xhat_eig[j])**2)
+...         mse_fast[i] += np.sum((x[j] - xhat_fast[j])**2)
+...     mse_eig[i] /= n
+...     mse_fast[i] /= n
+... 
+>>> fig = plt.figure(1)
+>>> plot1 = plt.plot(d, mse_eig, '|-b', label="PCA using eigenvalue decomposition")
+>>> plot2 = plt.plot(d, mse_fast, '.-g', label="Fast PCA")
+>>> leg = plt.legend(loc = 'best')
+>>> xl = plt.xlabel("Data dimensionality")
+>>> yl = plt.ylabel("Mean Squared Error")
+>>> plt.show()
+
+.. image:: images/fastpca.png
+
+
+Kernel Principal Component Analysis (KPCA)
+------------------------------------------
+
+.. autoclass:: KPCA
+   :members:
+
+
+Example:
+
+>>> import numpy as np
+>>> import matplotlib.pyplot as plt
+>>> import mlpy
+>>> np.random.seed(0)
 >>> np.random.seed(0)
 >>> x = np.zeros((150, 2))
 >>> y = np.empty(150, dtype=np.int)
@@ -124,14 +193,12 @@ Example:
 >>> cmap = plt.set_cmap(plt.cm.Paired)
 >>> gK = mlpy.kernel_gaussian(x, x, sigma=2) # gaussian kernel matrix
 >>> pK = mlpy.kernel_polynomial(x, x, gamma=1.0, b=1.0, d=2.0) # polynomial kernel matrix
->>> gK = mlpy.kernel_center(gK, gK) # centers the kernel matrix
->>> pK = mlpy.kernel_center(pK, pK)
->>> gcoeff, gevals = mlpy.kpca(gK)
->>> pcoeff, pevals = mlpy.kpca(pK)
->>> gcoeff = gcoeff[:, :2] # firsts two principal components
->>> pcoeff = pcoeff[:, :2] # firsts two principal components
->>> gz = np.dot(gK, gcoeff)
->>> pz = np.dot(pK, pcoeff)
+>>> gaussian_pca = mlpy.KPCA()
+>>> polynomial_pca = mlpy.KPCA()
+>>> gaussian_pca.learn(gK)
+>>> polynomial_pca.learn(pK)
+>>> gz = gaussian_pca.transform(gK, k=2)
+>>> pz = polynomial_pca.transform(pK, k=2)
 >>> fig = plt.figure(1)
 >>> ax1 = plt.subplot(131)
 >>> plot1 = plt.scatter(x[:, 0], x[:, 1], c=y)
@@ -145,57 +212,6 @@ Example:
 >>> plt.show()
 
 .. image:: images/kernel_pca.png
-
-Fast Principal Component Analysis (FastPCA)
--------------------------------------------
-Fast PCA implementation described in [Sharma07]_.
-
-.. autofunction:: pca_fast
-
-Example reproducing Figure 1 of [Sharma07]_:
-
->>> import numpy as np
->>> import matplotlib.pyplot as plt
->>> import mlpy
->>> np.random.seed(0)
->>> h = 10 # dimension reduced to h=10
->>> n = 100 # number of samples
->>> d = np.array([100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000, 3000, 4000]) # number of dimensions
->>> mse_eig, mse_fast = np.zeros(len(d)), np.zeros(len(d))
->>> for i in range(d.shape[0]):
-...     xorig = np.random.rand(100, d[i])
-...     xmean = np.mean(xorig, axis=0) # compute the columns mean
-...     xc = xorig - xmean # center the data
-...     evecs_eig, _ = mlpy.pca(xc) # pca (eigenvalue decomposition)
-...     evecs_eig = evecs_eig[:, :h] # keep the first h dimensions
-...     evecs_fast = mlpy.fastpca(xc, h, eps=0.01) # fast pca
-...     y_eig = np.dot(xc, evecs_eig) # reduced dimensional feature vectors (eigenvalue decomposition)
-...     y_fast = np.dot(xc, evecs_fast)  # reduced dimensional feature vectors (fast pca)
-...     xhat_eig = np.dot(y_eig, evecs_eig.T) + xmean # reconstructed vector (eigenvalue decomposition)
-...     xhat_fast = np.dot(y_fast, evecs_fast.T) + xmean # reconstructed vector (fast pca)
-...
->>> for j in range(n):
-...     mse_eig[i] += np.sum((xorig[j] - xhat_eig[j])**2)
-...     mse_fast[i] += np.sum((xorig[j] - xhat_fast[j])**2)
-...
->>> mse_eig[i] /= n
->>> mse_fast[i] /= n
->>> fig = plt.figure(1)
->>> plot1 = plt.plot(d, mse_eig, '|-b', label="PCA using eigenvalue decomposition")
->>> plot2 = plt.plot(d, mse_fast, '.-g', label="Fast PCA")
->>> leg = plt.legend(loc = 'best')
->>> xl = plt.xlabel("Data dimensionality")
->>> yl = plt.ylabel("Mean Squared Error")
->>> plt.show()
-
-.. image:: images/fastpca.png
-
-
-Whitening
----------
-
-.. autofunction:: whiten
-
 
 .. [Cai08] D Cai, X He, J Han. SRDA: An Efficient Algorithm for Large-Scale Discriminant Analysis. Knowledge and Data Engineering, IEEE Transactions on Volume 20, Issue 1, Jan. 2008 Page(s):1 - 12.
 .. [Sharma07]  A Sharma, K K Paliwal. Fast principal component analysis using fixed-point algorithm. Pattern Recognition Letters 28 (2007) 1151–1155.

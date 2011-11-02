@@ -78,7 +78,7 @@ and :math:`\mathbf{K}`:
 
     .. math::
     
-        \mathbf{\tilde{K}^t}_{ij} = \mathbf{K^t} - \mathbf{1}^T_N K
+        \mathbf{\tilde{K}^t}_{ij} = \mathbf{K^t} - \mathbf{1}^T_N \mathbf{K}
 	- \mathbf{K^t} \mathbf{1}_N + \mathbf{1}^T_N \mathbf{K} \mathbf{1}_N
 
 where :math:`\mathbf{1}_N` is the :math:`N \times M` matrix with all 

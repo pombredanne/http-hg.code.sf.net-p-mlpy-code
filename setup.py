@@ -30,7 +30,8 @@ base_include = [py_include, numpy_include]
 scripts = []
 
 ext_modules = [Extension("mlpy.gsl", ["mlpy/gsl/gsl.c"],
-                         libraries=['gsl', 'gslcblas', 'm']),
+                         libraries=['gsl', 'gslcblas', 'm'],
+                         include_dirs=base_include),
                Extension("mlpy.liblinear",
                          ["mlpy/liblinear/liblinear/linear.cpp",
                           "mlpy/liblinear/liblinear/tron.cpp",
@@ -118,7 +119,7 @@ packages=['mlpy', 'mlpy.wavelet', 'mlpy.hcluster',
 
 
 setup(name = 'mlpy',
-      version='3.0b4',
+      version='3.0b5',
       requires=['numpy (>=1.3.0)', 'scipy (>=0.7.0)', 'gsl (>=1.14)'],
       description='mlpy - Machine Learning Py - ' \
           'High-Performance Python Package for Predictive Modeling',
