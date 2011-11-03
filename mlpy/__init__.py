@@ -26,7 +26,7 @@ from elasticnet import *
 from dimred import *
 from irelief import *
 from parzen import *
-from confidence import *
+from stats import *
 
 import crossval
 import hcluster
@@ -41,7 +41,7 @@ import elasticnet
 import dimred
 import irelief
 import parzen
-import confidence
+import stats
 
 # visible submodules
 import wavelet
@@ -61,7 +61,7 @@ __all__ += elasticnet.__all__
 __all__ += dimred.__all__
 __all__ += irelief.__all__
 __all__ += parzen.__all__
-__all__ += confidence.__all__
+__all__ += stats.__all__
 
 __all__ += ['LibLinear']
 __all__ += ['LibSvm']

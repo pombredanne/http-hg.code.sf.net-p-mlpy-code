@@ -3,6 +3,12 @@
 :py:mod:`mlpy.wavelet` - Wavelet Transform
 ==========================================
 
+Padding
+-------
+
+.. autofunction:: pad
+
+
 Discrete Wavelet Transform
 --------------------------
 

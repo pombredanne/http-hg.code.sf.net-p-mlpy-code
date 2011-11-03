@@ -14,9 +14,11 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = ['bootstrap_ci']
 
+import gsl
 import numpy as np
+
+__all__ = ['bootstrap_ci', 'quantile']
 
 
 def bootstrap_ci(x, B=1000, alpha=0.05, seed=0):
@@ -49,3 +51,18 @@ def bootstrap_ci(x, B=1000, alpha=0.05, seed=0):
     upper = int(B * (1 - (alpha * 0.5)))
     
     return (bmean[lower], bmean[upper])
+
+
+def quantile(x, f):
+    """Returns a quantile value of `x`.
+
+    The quantile is determined by the `f`, a fraction between 
+    0 and 1. For example, to compute the value of the 75th
+    percentile `f` should have the value 0.75.
+    """
+
+    xarr = np.array(x, dtype=np.float, copy=True)
+    xarr = np.ravel(x)
+    xarr.sort()
+    
+    return gsl.stats_quantile_from_sorted_data(xarr, f)
