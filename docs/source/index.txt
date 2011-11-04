@@ -36,11 +36,11 @@ included in mlpy.
    weighting
    dim_red
    crossval
+   metrics
+   stats
    canberra
    borda
    findpeaks
-   metrics
-   borda
    wavelet
    scaling
 

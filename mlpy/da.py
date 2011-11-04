@@ -64,7 +64,7 @@ class LDAC:
             wi = (yarr == self._labels[i])
             p[i] = np.sum(wi) / float(xarr.shape[0])
             mu[i] = np.mean(xarr[wi], axis=0)
-            xi = xarr[wi] / mu[i]
+            xi = xarr[wi] - mu[i]
             cov += np.dot(xi.T, xi)
         cov /= float(xarr.shape[0] - k)
         covinv = np.linalg.inv(cov)

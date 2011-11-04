@@ -22,11 +22,11 @@ __all__ = ['bootstrap_ci', 'quantile']
 
 
 def bootstrap_ci(x, B=1000, alpha=0.05, seed=0):
-    """Computes the (1 -alpha) Bootstrap confidence interval
+    """Computes the (1-alpha) Bootstrap confidence interval
     from empirical bootstrap distribution of sample mean. 
         
-    The lower and upper confidence bounds are the (B * alpha / 2)-th 
-    and B * (1 − alpha/2)-th ordered means, respectively.
+    The lower and upper confidence bounds are the (B*alpha/2)-th 
+    and B * (1-alpha/2)-th ordered means, respectively.
     For B = 1000 and alpha = 0.05 these are the 25th and 975th
     ordered means.
     """
