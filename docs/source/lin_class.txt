@@ -3,8 +3,8 @@
 Linear Methods for Classification
 =================================
 
-Linear Discriminant Analysis Classifier (LDA-C)
------------------------------------------------
+Linear Discriminant Analysis Classifier (LDAC)
+----------------------------------------------
 See [Hastie09]_, page 106.
 
 .. autoclass:: LDAC
@@ -32,10 +32,10 @@ Binary classification:
 >>> ldac.learn(x, y)
 >>> w = ldac.weights()
 >>> w
-array([  9.35004277, -11.19030118])
+array([ 2.5948979  -2.58553746])
 >>> b = ldac.bias()
 >>> b
-26.333215226960807
+5.63727441841
 >>> xx = np.arange(np.min(x[:,0]), np.max(x[:,0]), 0.01)
 >>> yy = - (w[0] * xx + b) / w[1] # separator line
 >>> fig = plt.figure(1) # plot
@@ -57,13 +57,13 @@ Multiclass classification:
 >>> import matplotlib.pyplot as plt
 >>> import mlpy
 >>> np.random.seed(0)
->>> mean1, cov1, n1 = [1, 5], [[1,1],[1,2]], 200  # 200 samples of class 0
+>>> mean1, cov1, n1 = [1, 25], [[1,1],[1,2]], 200  # 200 samples of class 0
 >>> x1 = np.random.multivariate_normal(mean1, cov1, n1)
 >>> y1 = np.zeros(n1, dtype=np.int)
->>> mean2, cov2, n2 = [2.5, 2.5], [[1,0],[0,1]], 300 # 300 samples of class 1
+>>> mean2, cov2, n2 = [2.5, 22.5], [[1,0],[0,1]], 300 # 300 samples of class 1
 >>> x2 = np.random.multivariate_normal(mean2, cov2, n2)
 >>> y2 = np.ones(n2, dtype=np.int)
->>> mean3, cov3, n3 = [5, 8], [[0.5,0],[0,0.5]], 200 # 200 samples of class 2
+>>> mean3, cov3, n3 = [5, 28], [[0.5,0],[0,0.5]], 200 # 200 samples of class 2
 >>> x3 = np.random.multivariate_normal(mean3, cov3, n3)
 >>> y3 = 2 * np.ones(n3, dtype=np.int)
 >>> x = np.concatenate((x1, x2, x3), axis=0) # concatenate the samples
@@ -72,12 +72,12 @@ Multiclass classification:
 >>> ldac.learn(x, y)
 >>> w = ldac.weights()
 >>> w # w[i]: weights for label ldac.labels()[i]
-array([[-12.57833092,  16.69761893],
-       [  0.29608683,   1.93709193],
-       [ -8.45786668,  15.36183788]])
+array([[-0.30949939  4.53041257]
+       [ 2.52002288  1.50501818]
+       [ 4.2499381   5.90569921]])
 >>> b = ldac.bias()
 >>> b # b[i]: bias for label ldac.labels()[i]
-array([-37.23969563,  -3.57952642, -41.13090751])
+array([-12.65129158  -5.7628039  -35.63605709])
 >>> xx = np.arange(np.min(x[:,0]), np.max(x[:,0]), 0.01)
 >>> yy1 = (xx* (w[1][0]-w[0][0]) + b[1] - b[0]) / (w[0][1]-w[1][1])
 >>> yy2 = (xx* (w[2][0]-w[0][0]) + b[2] - b[0]) / (w[0][1]-w[2][1])
