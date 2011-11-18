@@ -93,11 +93,11 @@ cdef class KNN:
         if ret == 1:
             raise MemoryError("out of memory")
         
-    def pred(self, x):
+    def pred(self, t):
         """Predict KNN model on a test point(s).
         
         :Parameters:
-           x : 1d or 2d array_like object ([M,] P)
+           t : 1d or 2d array_like object ([M,] P)
               test point(s)
               
         :Returns:
@@ -108,33 +108,33 @@ cdef class KNN:
         """
         
         cdef int i
-        cdef np.ndarray[np.float_t, ndim=1] xiarr
+        cdef np.ndarray[np.float_t, ndim=1] tiarr
         cdef double *margin
-        cdef double *xdata
+        cdef double *tdata
         
 
         if self.nn.x is NULL:
             raise ValueError("no model computed")
         
-        xarr = np.ascontiguousarray(x, dtype=np.float)
-        if xarr.ndim > 2:
-            raise ValueError("x must be an 1d or a 2d array_like object")
+        tarr = np.ascontiguousarray(t, dtype=np.float)
+        if tarr.ndim > 2:
+            raise ValueError("t must be an 1d or a 2d array_like object")
 
-        if xarr.shape[-1] != self.nn.d:
-            raise ValueError("x, model: shape mismatch")
+        if tarr.shape[-1] != self.nn.d:
+            raise ValueError("t, model: shape mismatch")
 
-        if xarr.ndim == 1:
-            xiarr = xarr
-            p = predict_nn(&self.nn, <double *> xiarr.data, &margin)
+        if tarr.ndim == 1:
+            tiarr = tarr
+            p = predict_nn(&self.nn, <double *> tiarr.data, &margin)
             free(margin)
             if p == -2:
                 raise MemoryError("out of memory")
         else:
-            p = np.empty(xarr.shape[0], dtype=np.int)
-            for i in range(xarr.shape[0]):
-                xiarr = xarr[i]
-                xdata = <double *> xiarr.data
-                p[i] = predict_nn(&self.nn, xdata, &margin)
+            p = np.empty(tarr.shape[0], dtype=np.int)
+            for i in range(tarr.shape[0]):
+                tiarr = tarr[i]
+                tdata = <double *> tiarr.data
+                p[i] = predict_nn(&self.nn, tdata, &margin)
                 free(margin)
             if -2 in p:
                 raise MemoryError("out of memory")

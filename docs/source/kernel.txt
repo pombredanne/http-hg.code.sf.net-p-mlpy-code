@@ -118,5 +118,9 @@ array([[ 0.15376875,  0.06761464, -0.22138339],
 	 
 Make a Custom Kernel
 --------------------
+TODO
 
-.. todo:: Write this section...
+
+.. [Scolkopf98] Bernhard Scholkopf, Alexander Smola, and Klaus-Robert Muller.
+    Nonlinear component analysis as a kernel eigenvalue problem. Neural
+    Computation, 10(5):1299–1319, July 1998.

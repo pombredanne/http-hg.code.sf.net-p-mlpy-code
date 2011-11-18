@@ -28,7 +28,7 @@ class LDAC:
         """
 
         self._labels = None
-        self._weights = None
+        self._w = None
         self._bias = None
       
     def learn(self, x, y):
@@ -69,12 +69,12 @@ class LDAC:
         cov /= float(xarr.shape[0] - k)
         covinv = np.linalg.inv(cov)
         
-        self._weights = np.empty((k, xarr.shape[1]), dtype=np.float)
+        self._w = np.empty((k, xarr.shape[1]), dtype=np.float)
         self._bias = np.empty(k, dtype=np.float)
 
         for i in range(k):           
-            self._weights[i] = np.dot(covinv, mu[i])
-            self._bias[i] = - 0.5 * np.dot(mu[i], self._weights[i]) + \
+            self._w[i] = np.dot(covinv, mu[i])
+            self._bias[i] = - 0.5 * np.dot(mu[i], self._w[i]) + \
                 np.log(p[i])
 
     def labels(self):
@@ -83,38 +83,42 @@ class LDAC:
         
         return self._labels
         
-    def weights(self):
-        """Returns the feature weights.
+    def w(self):
+        """Returns the coefficients.
         For multiclass classification this method returns a 2d 
-        numpy array where w[i] contains the weights of label i 
-        (.labels()[i]). For binary classification an 1d numpy 
-        array (w_label0 - w_label1) is returned.
+        numpy array where w[i] contains the coefficients of label i.
+        For binary classification an 1d numpy array (w_1 - w_0) 
+        is returned.
         """
         
-        if self._weights is None:
+        if self._w is None:
             raise ValueError("no model computed.")
 
         if self._labels.shape[0] == 2:
-            return self._weights[0] - self._weights[1]
+            return self._w[1] - self._w[0]
         else:
-            return self._weights
+            return self._w
 
     def bias(self):
-        """Returns the bias."""
+        """Returns the bias.
+        For multiclass classification this method returns a 1d 
+        numpy array where b[i] contains the coefficients of label i. 
+        For binary classification an float (b_1 - b_0) is returned.
+        """
         
-        if self._weights is None:
+        if self._w is None:
             raise ValueError("no model computed.")
         
         if self._labels.shape[0] == 2:
-            return self._bias[0] - self._bias[1]
+            return self._bias[1] - self._bias[0]
         else:
             return self._bias
 
-    def pred(self, x):
-        """Does classification on test vector(s) x.
+    def pred(self, t):
+        """Does classification on test vector(s) `t`.
       
         :Parameters:
-            x : 1d (one sample) or 2d array_like object
+            t : 1d (one sample) or 2d array_like object
                 test data ([M,] P)
             
         :Returns:        
@@ -122,21 +126,21 @@ class LDAC:
                 the predicted class(es) for x is returned.
         """
         
-        if self._weights is None:
+        if self._w is None:
             raise ValueError("no model computed.")
 
-        xarr = np.asarray(x, dtype=np.float)
+        tarr = np.asarray(t, dtype=np.float)
 
-        if xarr.ndim == 1:
+        if tarr.ndim == 1:
             delta = np.empty(self._labels.shape[0], dtype=np.float)
             for i in range(self._labels.shape[0]):
-                delta[i] = np.dot(xarr, self._weights[i]) + self._bias[i]
+                delta[i] = np.dot(tarr, self._w[i]) + self._bias[i]
             return self._labels[np.argmax(delta)]
         else:
-            delta = np.empty((xarr.shape[0], self._labels.shape[0]),
+            delta = np.empty((tarr.shape[0], self._labels.shape[0]),
                         dtype=np.float)
             for i in range(self._labels.shape[0]):
-                delta[:, i] = np.dot(xarr, self._weights[i]) + self._bias[i]
+                delta[:, i] = np.dot(tarr, self._w[i]) + self._bias[i]
             return self._labels[np.argmax(delta, axis=1)]
 
 
@@ -243,32 +247,32 @@ class DLDA:
         tmp = np.exp(score * 0.5)
         return tmp / np.sum(tmp)
         
-    def pred(self, x):
-        """Does classification on test vector(s) x.
+    def pred(self, t):
+        """Does classification on test vector(s) t.
       
         :Parameters:
-           x : 1d (one sample) or 2d array_like object
+           t : 1d (one sample) or 2d array_like object
               test data ([M,] P)
             
         :Returns:        
            p : int or 1d numpy array
-              the predicted class(es) for x is returned.
+              the predicted class(es) for t is returned.
         """
         
         if self._xmprime is None:
             raise ValueError("no model computed.")
         
-        xarr = np.asarray(x, dtype=np.float)
+        tarr = np.asarray(t, dtype=np.float)
         
-        if xarr.ndim == 1:
-            return self._labels[np.argmax(self._score(xarr))]
+        if tarr.ndim == 1:
+            return self._labels[np.argmax(self._score(tarr))]
         else:
-            ret = np.empty(xarr.shape[0], dtype=np.int)
-            for i in range(xarr.shape[0]):
-                ret[i] = self._labels[np.argmax(self._score(xarr[i]))]
+            ret = np.empty(tarr.shape[0], dtype=np.int)
+            for i in range(tarr.shape[0]):
+                ret[i] = self._labels[np.argmax(self._score(tarr[i]))]
             return ret
         
-    def prob(self, x):
+    def prob(self, t):
         """For each sample returns C (number of classes)
         probability estimates.
         """
@@ -276,13 +280,13 @@ class DLDA:
         if self._xmprime is None:
             raise ValueError("no model computed.")
         
-        xarr = np.asarray(x, dtype=np.float)
+        tarr = np.asarray(t, dtype=np.float)
 
-        if xarr.ndim == 1:
-            return self._prob(xarr)
+        if tarr.ndim == 1:
+            return self._prob(tarr)
         else:
-            ret = np.empty((xarr.shape[0], self._labels.shape[0]),
+            ret = np.empty((tarr.shape[0], self._labels.shape[0]),
                 dtype=np.float)
-            for i in range(xarr.shape[0]):
-                ret[i] = self._prob(xarr[i])
+            for i in range(tarr.shape[0]):
+                ret[i] = self._prob(tarr[i])
             return ret

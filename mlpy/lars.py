@@ -169,12 +169,12 @@ class LARS():
         self._beta = np.copy(self._est[-1])
         self._beta0 = ymean - np.dot(xmean, self._beta)
 
-    def pred(self, x):
+    def pred(self, t):
         """Compute the predicted response.
 
         :Parameters:
-           x : 1d or 2d array_like object ([M,] P)
-              matrix of regressors
+           t : 1d or 2d array_like object ([M,] P)
+              test data
 
         :Returns:
            p : float or 1d numpy array
@@ -183,15 +183,15 @@ class LARS():
         if not self._beta or not self._beta0:
             raise ValueError('no mode computed; run learn() first')
 
-        xarr = np.asarray(x, dtype=np.float)
+        tarr = np.asarray(t, dtype=np.float)
 
-        if xarr.ndim > 2 or xarr.ndim < 1:
-            raise ValueError("x must be an 1d or a 2d array_like object")
+        if tarr.ndim > 2 or tarr.ndim < 1:
+            raise ValueError("t must be an 1d or a 2d array_like object")
 
         try:
-            p = np.dot(xarr, self._beta) + self._beta0
+            p = np.dot(tarr, self._beta) + self._beta0
         except ValueError:
-            raise ValueError("x, beta: shape mismatch")
+            raise ValueError("t, beta: shape mismatch")
 
         return p
 

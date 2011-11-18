@@ -194,12 +194,12 @@ class ElasticNet(object):
         self._beta /= xnorm
         self._beta0 = ymean - np.dot(xmean, self._beta)
 
-    def pred(self, x):
+    def pred(self, t):
         """Compute the predicted response.
 
         :Parameters:
-           x : 1d or 2d array_like object ([M,] P)
-              matrix of regressors
+           t : 1d or 2d array_like object ([M,] P)
+              test data
 
         :Returns:
            p : float or 1d numpy array
@@ -209,15 +209,15 @@ class ElasticNet(object):
         if self._beta0 is None:
             raise ValueError('no mode computed; run learn() first')
 
-        xarr = np.asarray(x, dtype=np.float)
+        tarr = np.asarray(t, dtype=np.float)
 
-        if xarr.ndim > 2 or xarr.ndim < 1:
-            raise ValueError("x must be an 1d or a 2d array_like object")
+        if tarr.ndim > 2 or tarr.ndim < 1:
+            raise ValueError("t must be an 1d or a 2d array_like object")
 
         try:
-            p = np.dot(xarr, self._beta) + self._beta0
+            p = np.dot(tarr, self._beta) + self._beta0
         except ValueError:
-            raise ValueError("x, beta: shape mismatch")
+            raise ValueError("t, beta: shape mismatch")
 
         return p
 
@@ -259,23 +259,23 @@ class ElasticNetC(ElasticNet):
 
         ElasticNet.learn(self, x, y)
 
-    def pred(self, x):
+    def pred(self, t):
         """Compute the predicted labels.
 
         :Parameters:
-           x : 1d or 2d array_like object ([M,] P)
-              matrix
+           t : 1d or 2d array_like object ([M,] P)
+              test data
 
         :Returns:
            p : integer or 1d numpy array
               predicted labels
         """
 
-        p = ElasticNet.pred(self, x)
+        p = ElasticNet.pred(self, t)
         return np.sign(p)
 
-    def weights(self):
-        """Returns the feature weights.
+    def w(self):
+        """Returns the coefficients.
         """
         if ElasticNet.beta(self) is None:
             raise ValueError("No model computed")

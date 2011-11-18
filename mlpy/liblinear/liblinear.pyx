@@ -189,37 +189,37 @@ cdef class LibLinear:
         self._free_model()
         self.model = train(&self.problem, &self.parameter)
 
-    def pred(self, x):
-        """Does classification on test vector(s) x.
+    def pred(self, t):
+        """Does classification on test vector(s) t.
                 
         :Parameters:
-            x : 1d (one sample) or 2d array_like object
-                test data (samples x features)
+            t : 1d (one sample) or 2d array_like object
+                test data
             
         :Returns:
             p : int or 1d numpy array
-                the predicted class(es) for x is returned.
+                the predicted class(es) for t is returned.
         """
 
         cdef int i
         cdef feature_node *test_node
 
-        xarr = np.ascontiguousarray(x, dtype=np.float64)
+        tarr = np.ascontiguousarray(t, dtype=np.float64)
 
-        if xarr.ndim > 2:
-            raise ValueError("x must be an 1d or a 2d array_like object")
+        if tarr.ndim > 2:
+            raise ValueError("t must be an 1d or a 2d array_like object")
         
         if self.model is NULL:
             raise ValueError("no model computed")
 
-        if xarr.ndim == 1:
-            test_node = array1d_to_node(xarr)
+        if tarr.ndim == 1:
+            test_node = array1d_to_node(tarr)
             p = predict(self.model, test_node)
             free(test_node)
         else:
-            p = np.empty(xarr.shape[0], dtype=np.int)
-            for i in range(xarr.shape[0]):
-                test_node = array1d_to_node(xarr[i])
+            p = np.empty(tarr.shape[0], dtype=np.int)
+            for i in range(tarr.shape[0]):
+                test_node = array1d_to_node(tarr[i])
                 p[i] = predict(self.model, test_node)
                 free(test_node)
         
@@ -283,11 +283,11 @@ cdef class LibLinear:
         else:
             return w
 
-    def weights(self):
-        """Returns the feature weights.
+    def w(self):
+        """Returns the coefficients.
         For 'mcsvm_cs' solver and for multiclass classification this
         method returns a 2d numpy array where w[i] contains the
-        weights of label i (.labels()[i]). For binary classification 
+        coefficients of label i. For binary classification 
         an 1d numpy array is returned.
         """
 

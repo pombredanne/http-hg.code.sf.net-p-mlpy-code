@@ -49,8 +49,8 @@ Support Vector Machines from [LIBSVM]_
                respectively set weight={1:0.5, 2:0.8}
 	 
 	.. automethod:: learn(x, y)
-        .. automethod:: pred(x)
-	.. automethod:: pred_probability(x)
+        .. automethod:: pred(t)
+	.. automethod:: pred_probability(t)
 	.. automethod:: labels()
 	.. automethod:: nclasses()
 	.. automethod:: nsv()

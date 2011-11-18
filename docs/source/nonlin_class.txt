@@ -59,7 +59,7 @@ k-Nearest-Neighbor
               number of nearest neighbors
        	
 	.. automethod:: learn(x, y)
-        .. automethod:: pred(x)
+        .. automethod:: pred(t)
 	.. automethod:: nclasses()
 	.. automethod:: labels()
 

@@ -33,8 +33,8 @@ Solvers:
                 respectively set weight={1:0.5, 2:0.8}
 	
 	.. automethod:: learn(x, y)
-        .. automethod:: pred(x)
-	.. automethod:: weights()
+        .. automethod:: pred(t)
+	.. automethod:: w()
 	.. automethod:: bias()
 	.. automethod:: nfeature()	
 	.. automethod:: nclasses()
@@ -61,7 +61,7 @@ Example:
 >>> y = np.concatenate((y1, y2, y3))
 >>> svm = mlpy.LibLinear(solver_type='l2r_l2loss_svc_dual', C=0.01)
 >>> svm.learn(x, y)
->>> w = svm.weights() # w[i]: weights for label svm.labels()[i]
+>>> w = svm.w() # w[i]: coefficients for label svm.labels()[i]
 >>> w
 array([[-0.73225278,  0.33309388],
        [ 0.32295557, -0.44097029],

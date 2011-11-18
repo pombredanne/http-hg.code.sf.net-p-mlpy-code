@@ -229,18 +229,18 @@ cdef class LibSvm:
         self._free_model()       
         self.model = svm_train(&self.problem, &self.parameter)
         
-    def pred(self, x):
-        """Does classification or regression on test vector(s) x.
+    def pred(self, t):
+        """Does classification or regression on test vector(s) t.
                 
         :Parameters:
         
-            x : 1d (one sample) or 2d array_like object
-                test data (samples x features)
+            t : 1d (one sample) or 2d array_like object
+                test data
             
         :Returns:
         
-            p : for a classification model, the predicted class(es) for x is
-                returned. For a regression model, the function value(s) of x
+            p : for a classification model, the predicted class(es) for t is
+                returned. For a regression model, the function value(s) of t
                 calculated using the model is returned. For an one-class
                 model, +1 or -1 is returned.
         """
@@ -248,29 +248,29 @@ cdef class LibSvm:
         cdef int i
         cdef svm_node *test_node
 
-        xarr = np.ascontiguousarray(x, dtype=np.float64)
+        tarr = np.ascontiguousarray(t, dtype=np.float64)
 
-        if xarr.ndim > 2:
-            raise ValueError("x must be an 1d or a 2d array_like object")
+        if tarr.ndim > 2:
+            raise ValueError("t must be an 1d or a 2d array_like object")
         
         if self.model is NULL:
             raise ValueError("no model computed")
 
-        if xarr.ndim == 1:
-            test_node = array1d_to_node(xarr)
+        if tarr.ndim == 1:
+            test_node = array1d_to_node(tarr)
             p = svm_predict(self.model, test_node)
             free(test_node)
         else:
-            p = np.empty(xarr.shape[0], dtype=np.float64)
-            for i in range(xarr.shape[0]):
-                test_node = array1d_to_node(xarr[i])
+            p = np.empty(tarr.shape[0], dtype=np.float64)
+            for i in range(tarr.shape[0]):
+                test_node = array1d_to_node(tarr[i])
                 p[i] = svm_predict(self.model, test_node)
                 free(test_node)
 
         return p
 
-    def pred_probability(self, x):
-        """Does classification or regression on a test vector x
+    def pred_probability(self, t):
+        """Does classification or regression on a test vector(s) t
         given a model with probability information.
 
         For a classification model with probability information, this
@@ -281,13 +281,13 @@ cdef class LibSvm:
         
         :Parameters:
         
-            x : 1d (one sample) or 2d array_like object
-                test data (samples x features)
+            t : 1d (one sample) or 2d array_like object
+                test data
             
         :Returns:
          
-            p : for a classification model, the predicted class(es) for x is
-                returned. For a regression model, the function value(s) of x
+            p : for a classification model, the predicted class(es) for t is
+                returned. For a regression model, the function value(s) of t
                 calculated using the model is returned. For an one-class
                 model, +1 or -1 is returned.
         """
@@ -295,10 +295,10 @@ cdef class LibSvm:
         cdef svm_node *test_node
         cdef double *prob_estimates
 
-        xarr = np.ascontiguousarray(x, dtype=np.float64)
+        tarr = np.ascontiguousarray(t, dtype=np.float64)
 
-        if xarr.ndim > 2:
-            raise ValueError("x must be an 1d or a 2d array_like object")
+        if tarr.ndim > 2:
+            raise ValueError("t must be an 1d or a 2d array_like object")
         
         if self.model is NULL:
             raise ValueError("no model computed")
@@ -312,15 +312,15 @@ cdef class LibSvm:
         prob_estimates = <double*> malloc (self.model.nr_class * 
             sizeof(double))
         
-        if xarr.ndim == 1:
-            test_node = array1d_to_node(xarr)
+        if tarr.ndim == 1:
+            test_node = array1d_to_node(tarr)
             p = svm_predict_probability(self.model, test_node,
                 prob_estimates)
             free(test_node)
         else:
-            p = np.empty(xarr.shape[0], dtype=np.float64)
-            for i in range(xarr.shape[0]):
-                test_node = array1d_to_node(xarr[i])
+            p = np.empty(tarr.shape[0], dtype=np.float64)
+            for i in range(tarr.shape[0]):
+                test_node = array1d_to_node(tarr[i])
                 p[i] = svm_predict_probability(self.model, test_node,
                     prob_estimates)
                 free(test_node)

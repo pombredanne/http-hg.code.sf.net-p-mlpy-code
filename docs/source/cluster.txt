@@ -15,6 +15,17 @@ The condensed distance matrix `y` can be computed by :func:`pdist()` function in
 
 .. [Amap] amap: Another Multidimensional Analysis Package, http://cran.r-project.org/web/packages/amap/index.html
 
+Memory-saving Hierarchical Clustering
+-------------------------------------
+
+Memory-saving Hierarchical Clustering derived from the R and Python 
+package 'fastcluster' [fastcluster]_.
+
+.. autoclass:: MFastHCluster
+   :members:
+
+.. [fastcluster] Fast hierarchical clustering routines for R and Python, http://cran.r-project.org/web/packages/fastcluster/index.html
+
 
 k-means
 -------

@@ -12,6 +12,7 @@ from kernel import *
 from adatron import *
 from canberra import *
 
+
 # python modules
 from crossval import *
 from hcluster import *
@@ -27,6 +28,7 @@ from dimred import *
 from irelief import *
 from parzen import *
 from stats import *
+from fastcluster import *
 
 import crossval
 import hcluster
@@ -41,7 +43,8 @@ import elasticnet
 import dimred
 import irelief
 import parzen
-import stats
+import stat
+import fastcluster
 
 # visible submodules
 import wavelet

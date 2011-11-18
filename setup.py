@@ -110,16 +110,24 @@ ext_modules = [Extension("mlpy.gsl", ["mlpy/gsl/gsl.c"],
                Extension("mlpy.bordacount.cborda",
                          ["mlpy/bordacount/borda.c"],
                          extra_compile_args=extra_compile_args,
-                         include_dirs=base_include)
+                         include_dirs=base_include),
+               Extension("mlpy.bordacount.cborda",
+                         ["mlpy/bordacount/borda.c"],
+                         extra_compile_args=extra_compile_args,
+                         include_dirs=base_include),
+               Extension('mlpy._fastcluster',
+                         ['mlpy/fastcluster/fastcluster/src/fastcluster_python.cpp'],
+                         extra_compile_args=extra_compile_args,
+                         include_dirs=base_include),
                ]
 
 
 packages=['mlpy', 'mlpy.wavelet', 'mlpy.hcluster',
-          'mlpy.bordacount']
+          'mlpy.bordacount', 'mlpy.fastcluster']
 
 
 setup(name = 'mlpy',
-      version='3.0b5',
+      version='3.0rc2',
       requires=['numpy (>=1.3.0)', 'scipy (>=0.7.0)', 'gsl (>=1.14)'],
       description='mlpy - Machine Learning Py - ' \
           'High-Performance Python Package for Predictive Modeling',

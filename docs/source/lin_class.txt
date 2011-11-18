@@ -30,7 +30,7 @@ Binary classification:
 >>> y = np.concatenate((y1, y2))
 >>> ldac = mlpy.LDAC()
 >>> ldac.learn(x, y)
->>> w = ldac.weights()
+>>> w = ldac.w()
 >>> w
 array([ 2.5948979  -2.58553746])
 >>> b = ldac.bias()
@@ -70,8 +70,8 @@ Multiclass classification:
 >>> y = np.concatenate((y1, y2, y3))
 >>> ldac = mlpy.LDAC()
 >>> ldac.learn(x, y)
->>> w = ldac.weights()
->>> w # w[i]: weights for label ldac.labels()[i]
+>>> w = ldac.w()
+>>> w # w[i]: coefficients label ldac.labels()[i]
 array([[-0.30949939  4.53041257]
        [ 2.52002288  1.50501818]
        [ 4.2499381   5.90569921]])
@@ -122,7 +122,7 @@ Examples
 >>> y = np.concatenate((y1, y2))
 >>> p = mlpy.Perceptron(alpha=0.1, thr=0.05, maxiters=100) # basic perceptron
 >>> p.learn(x, y)
->>> w = p.weights()
+>>> w = p.w()
 >>> w
 array([-69.00185254,  46.49202132])
 >>> b = p.bias()
@@ -171,7 +171,7 @@ Example:
 >>> y = np.concatenate((y1, y2))
 >>> en = mlpy.ElasticNetC(lmb=0.01, eps=0.001)
 >>> en.learn(x, y)
->>> w = en.weights()
+>>> w = en.w()
 >>> w
 array([-0.27733363,  0.30115026])
 >>> b = en.bias()

@@ -42,7 +42,7 @@ class Perceptron:
         self._thr = float(thr) # error threshold
 
         self._labels = None
-        self._weights = None
+        self._w = None
         self._bias = None # bias term
         self._err = None
         self._iters = None
@@ -77,12 +77,12 @@ class Perceptron:
         
         ynew = np.where(yarr == self._labels[0], 0, 1)
         
-        self._weights = np.zeros(xarr.shape[1], dtype=np.float)
+        self._w = np.zeros(xarr.shape[1], dtype=np.float)
         self._bias = 0.0
         n = ynew.shape[0]
         
         for i in range(self._maxiters):
-            tmp = np.where((np.dot(xarr, self._weights)+self._bias)>0, 1, 0)
+            tmp = np.where((np.dot(xarr, self._w)+self._bias)>0, 1, 0)
             err = np.sum(ynew != tmp) / float(n)
             
             if err <= self._thr:
@@ -90,45 +90,45 @@ class Perceptron:
                 break
      
             diff = ynew - tmp
-            self._weights += self._alpha * np.dot(xarr.T, diff)
+            self._w += self._alpha * np.dot(xarr.T, diff)
             self._bias += self._alpha * np.sum(diff)
                  
-        tmp = np.where((np.dot(xarr, self._weights)+self._bias)>0, 1, 0)
+        tmp = np.where((np.dot(xarr, self._w)+self._bias)>0, 1, 0)
         err = np.sum(ynew != tmp) / float(n)
 
         self._err = err
         self._iters = i + 1
 
-    def pred(self, x):
+    def pred(self, t):
         """Prediction method.
 
         :Parameters:
-           x : 1d or 2d array_like object
+           t : 1d or 2d array_like object
               testing data ([M,], P)
         """
 
-        if self._weights is None:
+        if self._w is None:
             raise ValueError("no model computed")
 
-        xarr = np.asarray(x, dtype=np.float)
-        if xarr.ndim > 2:
-            raise ValueError("x must be an 1d or a 2d array_like object")
+        tarr = np.asarray(t, dtype=np.float)
+        if tarr.ndim > 2:
+            raise ValueError("t must be an 1d or a 2d array_like object")
         
         try:
-            tmp = np.dot(x, self._weights) + self._bias
+            tmp = np.dot(tarr, self._w) + self._bias
         except ValueError:
             raise ValueError("p, model: shape mismatch")
 
         return np.where(tmp>0, self._labels[1], self._labels[0])
         
-    def weights(self):
-        """Returns the features weights.
+    def w(self):
+        """Returns the coefficients.
         """
 
-        if self._weights is None:
+        if self._w is None:
             raise ValueError("no model computed")
 
-        return self._weights
+        return self._w
 
     def labels(self):
         """Outputs the name of labels.
@@ -139,7 +139,7 @@ class Perceptron:
     def bias(self):
         """Returns the bias."""
         
-        if self._weights is None:
+        if self._w is None:
             raise ValueError("no model computed.")
 
         return self._bias
