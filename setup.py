@@ -3,7 +3,7 @@ from distutils.sysconfig import *
 from distutils.util import *
 
 try:
-    from Cytdhon.Distutils import build_ext
+    from Cython.Distutils import build_ext
 except ImportError:
     use_cython = False
 else:
