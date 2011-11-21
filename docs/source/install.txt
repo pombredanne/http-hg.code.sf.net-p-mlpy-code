@@ -4,14 +4,14 @@ Install
 Installing on \*nix from source
 -------------------------------
 
-On GNU/Linux, you need the following requirements:
+On GNU/Linux, OSX and FreeBSD you need the following requirements:
 
    * Python 2.X
    * NumPy >= 1.3.0 (with header files)
    * SciPy >= 0.7.0
    * GSL >= 1.14 (with header files)
 
-Run:
+From a terminal run:
 
 .. code-block:: sh
 
@@ -33,3 +33,17 @@ locations on your system, use the ``--include-dirs`` and
 
     $ python setup.py build_ext --include-dirs=/path/to/header --rpath=/path/to/lib
     $ python setup.py install
+
+
+Installing on Windows Xp/Vista/7 from binary installer
+------------------------------------------------------
+
+Requirements:
+
+   * Python 2.6 or 2.7 Windows installer
+   * NumPy >= 1.3.0 win32 installer
+   * SciPy >= 0.8.0 win32 installer
+
+The GSL library is pre-compiled (by MinGW) and included in mlpy.
+
+Run the mlpy Windows installer.

@@ -20,6 +20,8 @@
 #define AGGREGATE 2
 #define ADABOOST 3
 
+#define drand48() (((float) rand())/((float) RAND_MAX))
+#define srand48(x) (srand((x)))
 
 /*NN*/
 
