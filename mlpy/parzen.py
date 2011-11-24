@@ -24,20 +24,30 @@ class Parzen:
     """Parzen based classifier (binary).
     """
 
-    def __init__(self):
+    def __init__(self, kernel=None):
         """Initialization.
+
+        :Parameters:
+           kernel : None or mlpy.Kernel object.
+              if kernel is None, K and Kt in .learn()
+              and in .pred() methods must be precomputed kernel 
+              matricies, else K and Kt must be training (resp. 
+              test) data in input space.
         """
 
         self._alpha = None
         self._b = None
         self._labels = None
+        self._kernel = kernel
+        self._x = None
                 
     def learn(self, K, y):
         """Compute alpha and b.
 
         Parameters:
-           K: 2d array_like object (N, N)
-              precomputed kernel matrix
+           K: 2d array_like object
+              precomputed training kernel matrix (if kernel=None);
+              training data in input space (if kernel is a Kernel object)
            y : 1d array_like object (N)
               target values
         """
@@ -51,11 +61,15 @@ class Parzen:
         if y_arr.ndim != 1:
             raise ValueError("y must be an 1d array_like object")
         
-        if K_arr.shape[0] != K_arr.shape[1]:
-            raise ValueError("K must be a square matrix")
-
         if K_arr.shape[0] != y_arr.shape[0]:
             raise ValueError("K, y shape mismatch")
+
+        if self._kernel is None:
+            if K_arr.shape[0] != K_arr.shape[1]:
+                raise ValueError("K must be a square matrix")
+        else:
+            self._x = K_arr.copy()
+            K_arr = self._kernel.kernel(K_arr, K_arr)
         
         self._labels = np.unique(y_arr)
         if self._labels.shape[0] != 2:
@@ -79,10 +93,9 @@ class Parzen:
         """Compute the predicted class.
 
         :Parameters:
-           Kt : 1d or 2d array_like object ([M], N)
-              test kernel matrix. Precomputed inner products 
-              (in feature space) between M testing and N 
-              training points.
+           Kt : 1d or 2d array_like object
+              precomputed test kernel matrix. (if kernel=None);
+              test data in input space (if kernel is a Kernel object).
 
         :Returns:
            p : integer or 1d numpy array
@@ -93,6 +106,8 @@ class Parzen:
             raise ValueError("no model computed; run learn() first")
 
         Kt_arr = np.asarray(Kt, dtype=np.float)
+        if self._kernel is not None:
+            Kt_arr = self._kernel.kernel(Kt_arr, self._x)
 
         try:
             s = np.sign(np.dot(self._alpha, Kt_arr.T) + self._b)

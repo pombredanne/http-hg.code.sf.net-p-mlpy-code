@@ -19,6 +19,7 @@
 __all__ = ["ridge_base", "Ridge", "KernelRidge"]
 
 import numpy as np
+from kernel_class import *
 
 
 def ridge_base(x, y, lmb):
@@ -171,27 +172,39 @@ class KernelRidge:
     """Kernel Ridge Regression (dual).
     """
 
-    def __init__(self, lmb=1.0):
+    def __init__(self, lmb=1.0, kernel=None):
         """Initialization.
 
         :Parameters:
            lmb : float (>= 0.0)
               regularization parameter
+           kernel : None or mlpy.Kernel object.
+              if kernel is None, K and Kt in .learn()
+              and in .pred() methods must be precomputed kernel 
+              matricies, else K and Kt must be training (resp. 
+              test) data in input space.
         """
 
         if lmb < 0:
             raise ValueError("lmb must be >= 0")
 
+        if kernel is not None:
+            if not isinstance(kernel, Kernel):
+                raise ValueError("kernel must be None or a mlpy.Kernel object")
+
         self._lmb = float(lmb)
+        self._kernel = kernel
         self._alpha = None
         self._b = None
+        self._x = None
                                 
     def learn(self, K, y):
         """Compute the regression coefficients.
 
         Parameters:
            K: 2d array_like object (N, N)
-              precomputed training kernel matrix
+              precomputed training kernel matrix (if kernel=None);
+              training data in input space (if kernel is a Kernel object)
            y : 1d array_like object (N)
               target values
         """
@@ -205,12 +218,16 @@ class KernelRidge:
         if y_arr.ndim != 1:
             raise ValueError("y must be an 1d array_like object")
         
-        if K_arr.shape[0] != K_arr.shape[1]:
-            raise ValueError("K must be a square matrix")
-        
         if K_arr.shape[0] != y_arr.shape[0]:
             raise ValueError("K, y shape mismatch")
-        
+
+        if self._kernel is None:
+            if K_arr.shape[0] != K_arr.shape[1]:
+                raise ValueError("K must be a square matrix")
+        else:
+            self._x = K_arr.copy()
+            K_arr = self._kernel.kernel(K_arr, K_arr)
+
         n = K_arr.shape[0]
 
         # dual solution 
@@ -232,9 +249,8 @@ class KernelRidge:
 
         :Parameters:
            Kt : 1d or 2d array_like object ([M], N)
-              test kernel matrix. Precomputed inner products 
-              (in feature space) between M testing and N 
-              training points.
+              precomputed test kernel matrix. (if kernel=None);
+              test data in input space (if kernel is a Kernel object)
 
         :Returns:
            p : integer or 1d numpy darray
@@ -245,6 +261,8 @@ class KernelRidge:
             raise ValueError("no model computed; run learn() first")
 
         Kt_arr = np.asarray(Kt, dtype=np.float)
+        if self._kernel is not None:
+            Kt_arr = self._kernel.kernel(Kt_arr, self._x)
         
         try:
             p = np.dot(self._alpha, Kt_arr.T) + self._b

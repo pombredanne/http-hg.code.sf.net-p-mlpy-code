@@ -29,6 +29,7 @@ from irelief import *
 from parzen import *
 from stats import *
 from fastcluster import *
+from kernel_class import *
 
 import crossval
 import hcluster
@@ -45,6 +46,7 @@ import irelief
 import parzen
 import stat
 import fastcluster
+import kernel_class
 
 # visible submodules
 import wavelet
@@ -65,6 +67,8 @@ __all__ += dimred.__all__
 __all__ += irelief.__all__
 __all__ += parzen.__all__
 __all__ += stats.__all__
+__all__ += fastcluster.__all__
+__all__ += kernel_class.__all__
 
 __all__ += ['LibLinear']
 __all__ += ['LibSvm']
