@@ -15,8 +15,10 @@
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
+from kernel_class import *
 
-__all__ = ['LDAC', 'DLDA']
+
+__all__ = ['LDAC', 'DLDA', 'KFDAC']
 
 
 class LDAC:
@@ -122,8 +124,8 @@ class LDAC:
                 test data ([M,] P)
             
         :Returns:        
-            p : int or 1d numpy array
-                the predicted class(es) for x is returned.
+            p : integer or 1d numpy array
+                predicted class(es)
         """
         
         if self._w is None:
@@ -290,3 +292,137 @@ class DLDA:
             for i in range(tarr.shape[0]):
                 ret[i] = self._prob(tarr[i])
             return ret
+
+
+class KFDAC:
+    """Kernel Fisher Discriminant Analysis Classifier (binary classifier).
+
+    The bias term (b) is computed as in [Gavin03]_.
+
+    .. [Gavin03] Gavin C. et al. Efficient Cross-Validation of Kernel Fisher Discriminant Classifers. ESANN'2003 proceedings - European Symposium on Artificial Neural Networks, 2003.
+    """
+    
+    def __init__(self, lmb=0.001, kernel=None):
+        """Initialization.
+
+        :Parameters:
+           lmb : float (>= 0.0)
+              regularization parameter
+           kernel : None or mlpy.Kernel object.
+              if kernel is None, K and Kt in .learn()
+              and in .transform() methods must be precomputed kernel 
+              matricies, else K and Kt must be training (resp. 
+              test) data in input space.
+        """
+
+        if kernel is not None:
+            if not isinstance(kernel, Kernel):
+                raise ValueError("kernel must be None or a mlpy.Kernel object")
+
+        self._lmb = float(lmb)
+        self._kernel = kernel
+        self._labels = None
+        self._alpha = None
+        self._b = None
+        self._x = None
+      
+    def learn(self, K, y):
+        """Learning method.
+
+        :Parameters:
+           K: 2d array_like object
+              precomputed training kernel matrix (if kernel=None);
+              training data in input space (if kernel is a Kernel object)
+           y : 1d array_like object integer (N)
+              class labels (only two classes)
+        """
+
+        Karr = np.asarray(K, dtype=np.float)
+        yarr = np.asarray(y, dtype=np.int)
+
+        if Karr.ndim != 2:
+            raise ValueError("K must be a 2d array_like object")
+
+        if yarr.ndim != 1:
+            raise ValueError("y must be an 1d array_like object")
+        
+        if Karr.shape[0] != yarr.shape[0]:
+            raise ValueError("K, y shape mismatch")
+
+        if self._kernel is None:
+            if Karr.shape[0] != Karr.shape[1]:
+                raise ValueError("K must be a square matrix")
+        else:
+            self._x = Karr.copy()
+            Karr = self._kernel.kernel(Karr, Karr)
+
+        self._labels = np.unique(yarr)
+        if self._labels.shape[0] != 2:
+            raise ValueError("number of classes must be = 2")
+        
+        n = yarr.shape[0]
+        
+        idx1 = np.where(yarr==self._labels[0])[0]
+        idx2 = np.where(yarr==self._labels[1])[0]
+        n1 = idx1.shape[0]
+        n2 = idx2.shape[0]
+        
+        K1, K2 = Karr[:, idx1], Karr[:, idx2]
+        
+        N1 = np.dot(np.dot(K1, np.eye(n1) - (1 / float(n1))), K1.T)
+        N2 = np.dot(np.dot(K2, np.eye(n2) - (1 / float(n2))), K2.T)
+        N = N1 + N2 + np.diag(np.repeat(self._lmb, n))
+        Ni = np.linalg.inv(N)
+
+        m1 = np.sum(K1, axis=1) / float(n1)
+        m2 = np.sum(K2, axis=1) / float(n2)
+        d = (m1 - m2)
+        M = np.dot(d.reshape(-1, 1), d.reshape(1, -1))
+
+        self._alpha = np.linalg.solve(N, d)
+        self._b = - np.dot(self._alpha, (n1 * m1 + n2 * m2) / float(n))
+
+    def labels(self):
+        """Outputs the name of labels.
+        """
+        
+        return self._labels
+        
+    def pred(self, Kt):
+        """Compute the predicted response.
+      
+        :Parameters:
+           Kt : 1d or 2d array_like object
+              precomputed test kernel matrix. (if kernel=None);
+              test data in input space (if kernel is a Kernel object).
+            
+        :Returns:        
+            p : integer or 1d numpy array
+                the predicted class(es)
+        """
+
+        
+        if self._alpha is None:
+            raise ValueError("no model computed; run learn()")
+
+        Ktarr = np.asarray(Kt, dtype=np.float)
+        if self._kernel is not None:
+            Ktarr = self._kernel.kernel(Ktarr, self._x)
+
+        try:
+            s = np.sign(np.dot(self._alpha, Ktarr.T) + self._b)
+        except ValueError:
+            raise ValueError("Kt, alpha: shape mismatch")
+
+        return np.where(s==1, self._labels[0], self._labels[1]) \
+            .astype(np.int)
+
+    def alpha(self):
+        """Return alpha.
+        """
+        return self._alpha
+
+    def b(self):
+        """Return b.
+        """
+        return self._b

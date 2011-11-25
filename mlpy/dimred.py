@@ -19,6 +19,7 @@ import scipy.linalg as spla
 from ridge import ridge_base
 from ols import ols_base
 import kernel
+from kernel_class import *
 
 
 __all__ = ['LDA', 'SRDA', 'KFDA', 'PCA', 'PCAFast', 'KPCA']
@@ -482,28 +483,51 @@ class KFDA:
     """Kernel Fisher Discriminant Analysis.
     """
     
-    def __init__(self, lmb=0.001):
+    def __init__(self, lmb=0.001, kernel=None):
         """Initialization.
         
         :Parameters:
            lmb : float (>= 0.0)
               regularization parameter
+           kernel : None or mlpy.Kernel object.
+              if kernel is None, K and Kt in .learn()
+              and in .transform() methods must be precomputed kernel 
+              matricies, else K and Kt must be training (resp. 
+              test) data in input space.
         """
+
         
+        if kernel is not None:
+            if not isinstance(kernel, Kernel):
+                raise ValueError("kernel must be None or a mlpy.Kernel object")
+    
+        self._kernel = kernel
+        self._x = None
         self._coeff = None
         self._lmb = lmb
 
     def learn(self, K, y):
         """Computes the transformation vector.
-        `K` is a the kernel matrix (N,N) and `y` contains 
-        the class labels (the algorithm works only with 2
-        classes).
+
+        :Parameters:
+           K: 2d array_like object
+              precomputed training kernel matrix (if kernel=None);
+              training data in input space (if kernel is a Kernel object)
+           y : 1d array_like object integer (N)
+              class labels (only two classes)
         """
 
         Karr = np.array(K, dtype=np.float)
         yarr = np.asarray(y, dtype=np.int)
         if yarr.ndim != 1:
             raise ValueError("y must be an 1d array_like object")
+
+        if self._kernel is None:
+            if Karr.shape[0] != Karr.shape[1]:
+                raise ValueError("K must be a square matrix")
+        else:
+            self._x = Karr.copy()
+            Karr = self._kernel.kernel(Karr, Karr)
 
         labels = np.unique(yarr)
         if labels.shape[0] != 2:
@@ -512,17 +536,23 @@ class KFDA:
         self._coeff = kfda(Karr, yarr, self._lmb)
 
     def transform(self, Kt):
-        """Embed Kt (M,N) into the 1 dimensional space.
-        Returns a (M,1) matrix.
+        """Embed Kt into the 1d kernel fisher space.
+        
+        :Parameters:
+           Kt : 1d or 2d array_like object
+              precomputed test kernel matrix. (if kernel=None);
+              test data in input space (if kernel is a Kernel object).
         """
 
         if self._coeff is None:
             raise ValueError("no model computed")
 
         Ktarr = np.asarray(Kt, dtype=np.float)
-        
+        if self._kernel is not None:
+            Ktarr = self._kernel.kernel(Ktarr, self._x)
+
         try:
-            return np.dot(Kt, self._coeff)
+            return np.dot(Ktarr, self._coeff)
         except:
             ValueError("Kt, coeff: shape mismatch")
 
@@ -720,30 +750,58 @@ class KPCA:
     """Kernel Principal Component Analysis.
     """
     
-    def __init__(self):
+    def __init__(self, kernel=None):
         """Initialization.
+        
+        :Parameters:
+           kernel : None or mlpy.Kernel object.
+              if kernel is None, K and Kt in .learn()
+              and in .transform() methods must be precomputed kernel 
+              matricies, else K and Kt must be training (resp. 
+              test) data in input space.
         """
+
+        if kernel is not None:
+            if not isinstance(kernel, Kernel):
+                raise ValueError("kernel must be None or a mlpy.Kernel object")
         
         self._coeff = None
         self._evals = None
         self._K = None
+        self._kernel = kernel
+        self._x = None
 
     def learn(self, K):
         """Compute the kernel principal component coefficients.
-        `K` is the kernel matrix (N,N).
+
+        :Parameters:
+           K: 2d array_like object
+              precomputed training kernel matrix (if kernel=None);
+              training data in input space (if kernel is a Kernel object)
         """
 
         Karr = np.asarray(K, dtype=np.float)
         if Karr.ndim != 2:
             raise ValueError("K must be a 2d array_like object")
         
+        if self._kernel is None:
+            if Karr.shape[0] != Karr.shape[1]:
+                raise ValueError("K must be a square matrix")
+        else:
+            self._x = Karr.copy()
+            Karr = self._kernel.kernel(Karr, Karr)
+
         self._K = Karr.copy()
         Karr = kernel.kernel_center(Karr, Karr)
         self._coeff, self._evals = kpca(Karr)
        
     def transform(self, Kt, k=None):
-        """Embed Kt (M,N) into the `k` dimensional subspace.
-        Returns a (M,K) matrix.
+        """Embed Kt into the `k` dimensional subspace.
+        
+        :Parameters:
+           Kt : 1d or 2d array_like object
+              precomputed test kernel matrix. (if kernel=None);
+              test data in input space (if kernel is a Kernel object).
         """
 
         if self._coeff is None:
@@ -757,6 +815,9 @@ class KPCA:
                                  self._coeff.shape[1])
 
         Ktarr = np.asarray(Kt, dtype=np.float)
+        if self._kernel is not None:
+            Ktarr = self._kernel.kernel(Ktarr, self._x)
+        
         Ktarr = kernel.kernel_center(Ktarr, self._K)
 
         try:

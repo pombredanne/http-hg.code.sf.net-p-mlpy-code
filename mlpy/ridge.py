@@ -202,7 +202,7 @@ class KernelRidge:
         """Compute the regression coefficients.
 
         Parameters:
-           K: 2d array_like object (N, N)
+           K: 2d array_like object
               precomputed training kernel matrix (if kernel=None);
               training data in input space (if kernel is a Kernel object)
            y : 1d array_like object (N)
@@ -248,9 +248,9 @@ class KernelRidge:
         """Compute the predicted response.
 
         :Parameters:
-           Kt : 1d or 2d array_like object ([M], N)
+           Kt : 1d or 2d array_like object
               precomputed test kernel matrix. (if kernel=None);
-              test data in input space (if kernel is a Kernel object)
+              test data in input space (if kernel is a Kernel object).
 
         :Returns:
            p : integer or 1d numpy darray

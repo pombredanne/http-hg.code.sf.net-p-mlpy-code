@@ -46,6 +46,12 @@ Support Vector Classification
 
 See :doc:`svm`
 
+Kernel Fisher Discriminant Classifier
+-------------------------------------
+
+.. autoclass:: KFDAC
+   :members:
+
 
 k-Nearest-Neighbor
 ------------------
