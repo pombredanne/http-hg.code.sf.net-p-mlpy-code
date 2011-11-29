@@ -258,7 +258,7 @@ class KernelRidge:
         """
 
         if self._alpha is None:
-            raise ValueError("no model computed; run learn() first")
+            raise ValueError("no model computed; run learn()")
 
         Kt_arr = np.asarray(Kt, dtype=np.float)
         if self._kernel is not None:
