@@ -247,6 +247,32 @@ class ElasticNetC(ElasticNet):
     See the ElasticNet class documentation.
     """
 
+    def __init__(self, lmb, eps, supp=True, tol=0.01):
+        """Initialization.
+
+        :Parameters:
+            lmb : float
+               regularization parameter controlling overfitting.
+               `lmb` can be tuned via cross validation.
+            eps : float
+               correlation parameter preserving correlation
+               among variables against sparsity. The solutions
+               obtained for different values of the correlation
+               parameter have the same prediction properties but
+               different feature representation.
+            supp : bool
+               if True, the algorithm stops when the support of beta
+               reached convergence. If False, the algorithm stops when
+               the coefficients reached convergence, that is when
+               the beta_{l}(i) - beta_{l+1}(i) > tol * beta_{l}(i)
+               for all i.
+            tol : double
+               tolerance for convergence
+        """
+        
+        ElasticNet.__init__(self, lmb, eps, supp=True, tol=0.01)
+        self._labels = None
+
     def learn(self, x, y):
         """Compute the classification coefficients.
 
@@ -257,7 +283,16 @@ class ElasticNetC(ElasticNet):
             class labels
         """
 
-        ElasticNet.learn(self, x, y)
+        yarr = np.asarray(y, dtype=np.int)
+        self._labels = np.unique(yarr)
+        
+        k = self._labels.shape[0]
+        if k != 2:
+            raise ValueError("number of classes must be = 2")
+
+        ynew = np.where(yarr == self._labels[0], -1, 1) 
+
+        ElasticNet.learn(self, x, ynew)
 
     def pred(self, t):
         """Compute the predicted labels.
@@ -272,7 +307,9 @@ class ElasticNetC(ElasticNet):
         """
 
         p = ElasticNet.pred(self, t)
-        return np.sign(p)
+        ret = np.where(p>0, self._labels[1], self._labels[0])
+
+        return ret
 
     def w(self):
         """Returns the coefficients.
@@ -289,3 +326,9 @@ class ElasticNetC(ElasticNet):
             raise ValueError("No model computed")
 
         return super(ElasticNetC, self).beta0()
+
+    def labels(self):
+        """Outputs the name of labels.
+        """
+        
+        return self._labels
