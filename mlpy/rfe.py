@@ -48,7 +48,7 @@ def rayleigh(x, kernel, lmb, alpha, idx1, idx2):
     return R
 
 
-def rfe_kfda(x, y, p, lmb=0.001, kernel=KernelLinear()):
+def rfe_kfda(x, y, p, lmb, kernel):
     """KFDA-RFE algorithm based on the Rayleigh coefficient
     proposed in [Louw06]_. The algorithm works with only two
     classes.

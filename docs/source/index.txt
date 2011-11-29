@@ -34,6 +34,7 @@ included in mlpy.
    liblinear
    cluster
    weighting
+   selection
    dim_red
    crossval
    metrics
