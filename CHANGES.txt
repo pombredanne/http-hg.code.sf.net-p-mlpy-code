@@ -1,2 +1,17 @@
-Version 3.0
+Version 3.1
 -----------
+
+New features:
+
+ * Golub classifier added
+ * RFE (w^2) added
+ * RFE-KFDA added 
+ * Kernel Fisher Classifier added 
+ * kernel class system added
+
+Fix:
+
+ * Perceptron: fix pred() output when t is 1d 
+  
+ 
+ 
