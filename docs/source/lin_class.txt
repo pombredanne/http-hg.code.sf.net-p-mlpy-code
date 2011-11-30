@@ -244,4 +244,11 @@ Example:
 .. image:: images/dlda.png
 
 
+Golub Classifier
+----------------
+
+.. autoclass:: Golub
+   :members:
+
+
 .. [Hastie09] T Hastie, R Tibshirani, J Friedman. The Elements of Statistical Learning. Second Edition.
