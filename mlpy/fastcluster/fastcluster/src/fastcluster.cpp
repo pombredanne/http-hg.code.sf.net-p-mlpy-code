@@ -10,6 +10,8 @@
 
 #include <limits> // for infinity()
 
+#include <stddef.h>
+
 #include <float.h>
 #ifndef DBL_MANT_DIG
 #error The constant DBL_MANT_DIG could not be defined.
