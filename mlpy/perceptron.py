@@ -117,9 +117,10 @@ class Perceptron:
         try:
             tmp = np.dot(tarr, self._w) + self._bias
         except ValueError:
-            raise ValueError("p, model: shape mismatch")
+            raise ValueError("t, model: shape mismatch")
 
-        return np.where(tmp>0, self._labels[1], self._labels[0])
+        return np.where(tmp>0, self._labels[1], self._labels[0]) \
+            .astype(np.int)
         
     def w(self):
         """Returns the coefficients.
