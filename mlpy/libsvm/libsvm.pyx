@@ -28,7 +28,7 @@ cdef void print_null(char *s):
 # array 1D to svm node
 cdef svm_node *array1d_to_node(np.ndarray[np.float64_t, ndim=1] x):
     cdef int i, k
-    cdef np.ndarray[np.int64_t, ndim=1] nz
+    cdef np.ndarray[np.int_t, ndim=1] nz
     cdef svm_node *ret
 
     nz = np.nonzero(x)[0]
