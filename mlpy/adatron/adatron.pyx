@@ -67,9 +67,9 @@ class KernelAdatron:
               target values
         """
         
-        cdef np.ndarray[np.int64_t, ndim=1] ynew
-        cdef np.ndarray[np.float64_t, ndim=2] K_arr
-        cdef np.ndarray[np.float64_t, ndim=1] alpha_arr
+        cdef np.ndarray[np.int_t, ndim=1] ynew
+        cdef np.ndarray[np.float_t, ndim=2] K_arr
+        cdef np.ndarray[np.float_t, ndim=1] alpha_arr
         cdef double margin
 
         K_arr = np.ascontiguousarray(K, dtype=np.float)
