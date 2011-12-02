@@ -64,7 +64,7 @@ Example on :download:`spiral dataset <data/spiral.data>`:
 >>> import numpy as np
 >>> import matplotlib.pyplot as plt
 >>> import mlpy
->>> f = np.loadtxt("spiral.txt")
+>>> f = np.loadtxt("spiral.data")
 >>> x, y = f[:, :2], f[:, 2]
 >>> svm = mlpy.LibSvm(svm_type='c_svc', kernel_type='rbf', gamma=100)
 >>> svm.learn(x, y)
@@ -142,7 +142,7 @@ Example:
 ...     ka.learn(K, y)
 ...     ytest = ka.pred(Kt).reshape(xx.shape)
 ...     title = ax.set_title('C: %s; margin: %.3f; steps: %s;' % (c, ka.margin(), ka.steps()))
-...     plot1 = plt.pcolormesh(xx, yy, yt)
+...     plot1 = plt.pcolormesh(xx, yy, ytest)
 ...     plot2 = plt.scatter(x[:,0], x[:,1], c=y)
 >>> plt.show()
 
