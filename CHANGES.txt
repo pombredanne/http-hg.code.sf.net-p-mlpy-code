@@ -1,16 +1,22 @@
+Version 3.2
+-----------
+New features:
+ * PLS added 
+Fix:
+ * fix docs in LibSVM and KernelAdatron
+ * fix svg logo 
+ * minor fix in LibSVM and KernelAdatron
+ * include stddef.h in fastcluster 
+
 Version 3.1
 -----------
-
 New features:
-
  * Golub classifier added
  * RFE (w^2) added
  * RFE-KFDA added 
  * Kernel Fisher Classifier added 
  * kernel class system added
-
 Fix:
-
  * Perceptron: fix pred() output when t is 1d 
   
  

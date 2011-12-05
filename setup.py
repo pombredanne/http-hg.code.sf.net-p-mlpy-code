@@ -200,7 +200,7 @@ packages=['mlpy', 'mlpy.wavelet', 'mlpy.hcluster',
           'mlpy.bordacount', 'mlpy.fastcluster']
 
 setup(name = 'mlpy',
-      version='3.1',
+      version='3.2',
       requires=['numpy (>=1.3.0)', 'scipy (>=0.7.0)', 'gsl (>=1.14)'],
       description='mlpy - Machine Learning Py - ' \
           'High-Performance Python Package for Predictive Modeling',

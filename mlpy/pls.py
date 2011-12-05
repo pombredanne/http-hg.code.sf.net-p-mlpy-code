@@ -16,12 +16,14 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+__all__ = ['PLS']
 
 import numpy as np
 
 
 class PLS:
-    """Multivariate primal PLS alghorithm as described in [Taylor04]_.
+    """Multivariate primal Partial Least Squares (PLS) 
+    algorithm as described in [Taylor04]_.
 
     .. [Taylor04] J Shawe-Taylor and N Cristianini. Kernel Methods for Pattern Analysis.
     """
@@ -94,7 +96,7 @@ class PLS:
             self._beta = np.ravel(self._beta)
 
     def pred(self, t):
-        """Compute the predicted response.
+        """Compute the predicted response(s).
 
         :Parameters:
            t : 1d or 2d array_like object ([M,] P)

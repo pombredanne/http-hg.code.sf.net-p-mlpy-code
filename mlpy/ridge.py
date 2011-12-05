@@ -164,7 +164,7 @@ class Ridge:
     def beta0(self):
         """Return b0.
         """
-a
+
         return self._beta0
 
 
