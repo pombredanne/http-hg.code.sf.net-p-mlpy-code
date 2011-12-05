@@ -64,6 +64,13 @@ Example:
 
 .. image:: images/ridge.png
 
+
+Partial Least Squares
+---------------------
+
+.. autoclass:: PLS
+   :members:
+
 Last Angle Regression (LARS)
 ----------------------------
 

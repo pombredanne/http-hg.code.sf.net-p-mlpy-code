@@ -32,6 +32,7 @@ from fastcluster import *
 from kernel_class import *
 from rfe import *
 from golub import *
+from pls import *
 
 import crossval
 import hcluster
@@ -51,6 +52,7 @@ import fastcluster
 import kernel_class
 import rfe
 import golub
+import pls
 
 # visible submodules
 import wavelet
@@ -75,6 +77,7 @@ __all__ += fastcluster.__all__
 __all__ += kernel_class.__all__
 __all__ += rfe.__all__
 __all__ += golub.__all__
+__all__ += pls.__all__
 
 __all__ += ['LibLinear']
 __all__ += ['LibSvm']

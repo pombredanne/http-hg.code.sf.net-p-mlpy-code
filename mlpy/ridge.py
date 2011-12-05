@@ -105,7 +105,7 @@ class Ridge:
 
         Parameters:
            x : 2d array_like object
-              training data (N x P)
+              training data (N, P)
            y : 1d array_like object (N)
               target values
         """
@@ -141,7 +141,7 @@ class Ridge:
         """
 
         if self._beta is None:
-            raise ValueError("no model computed; run learn() first")
+            raise ValueError("no model computed; run learn()")
 
         tarr = np.asarray(t, dtype=np.float)
 
@@ -164,7 +164,7 @@ class Ridge:
     def beta0(self):
         """Return b0.
         """
-
+a
         return self._beta0
 
 
