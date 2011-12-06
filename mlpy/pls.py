@@ -1,6 +1,6 @@
 ## PLS
 
-## This code is written by Davide Albanese, <albanese@fbk.eu>.
+## This code is written by Davide Albanese, <davide.albanese@gmail.com>.
 ## (C) 2011 mlpy Developers.
 
 ## This program is free software: you can redistribute it and/or modify
@@ -86,8 +86,9 @@ class PLS:
                     u[:, i] = tu / np.linalg.norm(tu)
             
             t = np.dot(xarr, u[:, i].reshape(-1, 1))
-            c[:, i] = np.ravel(np.dot(yarr.T, t) / np.dot(t.T, t))
-            p[:, i] = np.ravel(np.dot(xarr.T, t) / np.dot(t.T, t))
+            tt = np.dot(t.T, t)
+            c[:, i] = np.ravel(np.dot(yarr.T, t) / tt)
+            p[:, i] = np.ravel(np.dot(xarr.T, t) / tt)
             xarr = xarr - np.dot(t, p[:, i].reshape(1, -1))         
             
         self._beta = np.dot(u, np.linalg.solve(np.dot(p.T, u), c.T))
