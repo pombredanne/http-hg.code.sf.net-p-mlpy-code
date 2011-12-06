@@ -47,7 +47,7 @@ import elasticnet
 import dimred
 import irelief
 import parzen
-import stat
+import stats
 import fastcluster
 import kernel_class
 import rfe
