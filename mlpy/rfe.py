@@ -143,7 +143,7 @@ def rfe_w2(x, y, p, classifier):
        p : float [0.0, 1.0]
           percentage  of features (upper rounded) to remove
           at each iteration (p=0 one variable)
-       classifier : object with a w() method
+       classifier : object with learn() and w() methods
           classifier object
 
     :Returns:

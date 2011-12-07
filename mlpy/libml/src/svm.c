@@ -3,16 +3,16 @@
 #include <stdlib.h>
 #include "ml.h"
 
-static void svm_smo();
-static int examineExample();
-static int takeStep();
+static void svm_smo(SupportVectorMachine *svm);
+static int examineExample(int i1, SupportVectorMachine *svm);
+static int takeStep(int i1, int i2, SupportVectorMachine *svm;);
 
-static double learned_func_linear();
-static double learned_func_nonlinear();
+static double learned_func_linear(int k, SupportVectorMachine *svm);
+static double learned_func_nonlinear(int k, SupportVectorMachine *svm);
 
-static double rbf_kernel();
-static double polinomial_kernel();
-static double dot_product_func();
+static double rbf_kernel(int i1, int i2, SupportVectorMachine *svm);
+static double polinomial_kernel(int i1, int i2, SupportVectorMachine *svm);
+static double dot_product_func(int i1, int i2, SupportVectorMachine *svm);
 
 static int compute_svm_bagging(ESupportVectorMachine *esvm,int n,int d,
 			       double *x[],int y[],int nmodels,int kernel,

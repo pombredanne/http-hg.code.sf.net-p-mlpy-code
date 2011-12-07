@@ -1,3 +1,6 @@
+#ifndef ML_H
+#define ML_H
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -93,7 +96,7 @@ typedef struct
 
 /*SVM*/
 
-typedef struct
+typedef struct SupportVectorMachine
 {
   int n;/*number of examples*/
   int d;/*number of features*/
@@ -109,8 +112,8 @@ typedef struct
   double *w;/*hyperplane parameters (linearly separable  case)*/
   double *error_cache;/*error for each training point*/ 
   int end_support_i;/*set to N, never changed*/
-  double (*learned_func)();/*the SVM*/
-  double (*kernel_func)();/*the kernel*/
+  double (*learned_func)(int, struct SupportVectorMachine *);/*the SVM*/
+  double (*kernel_func)(int, int, struct SupportVectorMachine *);/*the kernel*/
   double delta_b;/*gap between old and updated offset*/
   double *precomputed_self_dot_product;/*squared norm of the training data*/
   double *Cw;/*weighted C parameter (sen/spe)*/
@@ -120,7 +123,7 @@ typedef struct
   int convergence; /*to assess convergence*/
   int verbose; /*verbosity */
   double **K; /*precomputed kernel matrix (for RSFN)*/
-} SupportVectorMachine;
+}SupportVectorMachine;
 
 typedef struct
 {
@@ -348,3 +351,5 @@ double tr_kernel(double x1[], double x2[],
 
 /*ttest*/
 int ttest(double *data1,int n1,double *data2,int n2,double *t,double *prob);
+
+#endif /* ML_H */

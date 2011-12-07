@@ -109,7 +109,7 @@ static double betacf(double a,double b,double x)
     if(fabs(az-aold)<(EPS*fabs(az)))
       return az;
   }
-  fprintf(stderr,"WARNING: a or b tto big, or ITMAX too small in BETACF\n");
+  fprintf(stderr,"WARNING: a or b too big, or ITMAX too small in BETACF\n");
 }
 
 #undef ITMAX

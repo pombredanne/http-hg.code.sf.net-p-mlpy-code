@@ -7,12 +7,12 @@ static void proj(SlopeFunctions *sf, double *x_tr[],
 		 int d, int y_tr[], double x[], double **x_proj);
 static void s_f(SlopeFunctions *sf,double *x[],int y[],int n,int d,
 		double threshold,int verbose,int knn);
-static void svm_smo();
-static int examineExample();
-static int takeStep();
+static void svm_smo(SupportVectorMachine *svm);
+static int examineExample(int i1, SupportVectorMachine *svm);
+static int takeStep(int i1, int i2, SupportVectorMachine *svm);
 
-static double learned_func_linear();
-static double dot_product_func();
+static double learned_func_linear(int k, SupportVectorMachine *svm);
+static double dot_product_func(int i1, int i2, SupportVectorMachine *svm);
 
 
 
