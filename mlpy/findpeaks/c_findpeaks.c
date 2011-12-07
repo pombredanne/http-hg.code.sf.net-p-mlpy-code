@@ -15,8 +15,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <Python.h>
-#include <numpy/arrayobject.h>
 #include <stdlib.h>
 
 
@@ -34,7 +32,7 @@ typedef struct node NODE;
 
 
 int
-enqueue(NODE **head, NODE **tail, double data)
+enqueue(NODE **head, NODE **tail, int data)
 {
   NODE *tmp;
   tmp = malloc(sizeof(NODE));
@@ -55,67 +53,35 @@ enqueue(NODE **head, NODE **tail, double data)
 }
 
 
-static PyObject *
-findpeaks_findpeaks_win(PyObject *self, PyObject *args, PyObject *keywds)
+
+int *fp_win(double *x, int n, int span, int *m)
 {
-  /* input */
-  PyObject *x = NULL;
-  int span;
+  // m: size of output vector
 
-  /* x contiguous */
-  PyObject *xCont = NULL;
-  
-  double * xC;
-  npy_intp xDim;
-  
-  static char *kwlist[] = {"x", "span", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Oi", kwlist, &x, &span))
-    return NULL;
-
-  xCont = PyArray_FROM_OTF(x, NPY_DOUBLE, NPY_IN_ARRAY);
-  if (xCont == NULL) return NULL;
-
-  /* Check number of dimension */
-  if (PyArray_NDIM(xCont) != 1)
-    {
-      PyErr_SetString(PyExc_ValueError, "x must be 1-dimensional");
-      return NULL;
-    }
-  
-  /* Check span */
-  if ((span % 2 == 0) || (span < 3))
-    {
-       PyErr_SetString(PyExc_ValueError, "span must be >= 3 and odd");
-       return NULL;
-    }
-  
-  xC = (double *) PyArray_DATA(xCont);
-  xDim = PyArray_DIM(xCont, 0);
-
-  /*** Start alghorithm ***/
-  
   NODE *head = NULL, *tail = NULL;
-  npy_intp l_min, l_max, r_min, r_max;
-  npy_intp i, j;
-  npy_intp m;
+  NODE *tmp = NULL;
+  int l_min, l_max, r_min, r_max;
+  int i, j, k;
   short int is_peak;
   int dist;
+  int *ret;
+
 
   dist = (span + 1) / 2;
 
-  m = 0;
-  for (i=0; i<xDim; i++)
+  *m = 0;
+  for (i=0; i<n; i++)
     {
       l_min = MAX(i-dist+1, 0);
       l_max = i-1;
       r_min = i+1;
-      r_max = MIN(i+dist-1, xDim-1);
+      r_max = MIN(i+dist-1, n-1);
       
       is_peak = 1;
       
       /* left side */
       for (j=l_min; j<=l_max; j++)
-	if (xC[j] >= xC[i])
+	if (x[j] >= x[i])
 	  {
 	    is_peak = 0;
 	    break;
@@ -124,7 +90,7 @@ findpeaks_findpeaks_win(PyObject *self, PyObject *args, PyObject *keywds)
       /* right side */
       if (is_peak == 1)
 	for (j=r_min; j<=r_max; j++)
-	  if (xC[j] >= xC[i])
+	  if (x[j] >= x[i])
 	    {
 	      is_peak = 0;
 	      break;
@@ -134,68 +100,23 @@ findpeaks_findpeaks_win(PyObject *self, PyObject *args, PyObject *keywds)
 	{
 	  if (enqueue(&head, &tail, i))
 	    return NULL; 
-	  m++;
+	  *m = *m + 1;
 	}
     }
 
-  /*** End alghorithm ***/
+  // build the output vector
 
-  /*** Start build the output array ***/
-
-  npy_intp retDims[1];
-  PyObject *retCont = NULL;
-  long *retC;
-
-  NODE *tmp = NULL;
-  npy_intp k;
-    
-  retDims[0] = m;
-  retCont = PyArray_SimpleNew(1, retDims, NPY_LONG);
-  retC = (long *) PyArray_DATA(retCont);
+  ret = (int *) malloc (*m * sizeof(int));
     
   /* copy and free the list */
-  for (k=0; k<m; k++)
+  for (k=0; k<*m; k++)
     {
       tmp = head->next;
-      retC[k] = head->data;
+      ret[k] = head->data;
       free(head);
       head = tmp;
     }
   tail = NULL;
 
-  /*** End build the output array ***/ 
-
-  Py_DECREF(xCont);
-  return Py_BuildValue("N", retCont);
-}
-
-
-static char module_doc[] = "";
-static char findpeaks_win_doc[] = "";
-
-
-/* Method table */
-static PyMethodDef findpeaks_methods[] = {
-  {"findpeaks_win",
-   (PyCFunction)findpeaks_findpeaks_win,
-   METH_VARARGS | METH_KEYWORDS,
-   findpeaks_win_doc},
-  {NULL, NULL, 0, NULL}
-};
-
-#if PY_MAJOR_VERSION >= 3
-  static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "_cfindpeaks",
-    module_doc,
-    -1,
-    findpeaks_methods,
-    NULL, NULL, NULL, NULL
-  };
-#endif
-
-void initc_findpeaks(void)
-{
-  Py_InitModule3("c_findpeaks", findpeaks_methods, module_doc);
-  import_array();
+  return ret;
 }

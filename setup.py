@@ -98,7 +98,8 @@ if use_cython:
                               include_dirs=base_include,
                               libraries=['m']),
                     Extension("mlpy.findpeaks",
-                              ["mlpy/findpeaks/findpeaks.pyx"],
+                              ["mlpy/findpeaks/c_findpeaks.c",
+                               "mlpy/findpeaks/findpeaks.pyx"],
                               include_dirs=base_include),
                     ]
 else:
@@ -159,15 +160,13 @@ else:
                               include_dirs=base_include,
                               libraries=['m']),
                     Extension("mlpy.findpeaks",
-                              ["mlpy/findpeaks/findpeaks.c"],
+                              ["mlpy/findpeaks/c_findpeaks.c",
+                               "mlpy/findpeaks/findpeaks.c"],
                               include_dirs=base_include),
                     ]
-                    
-ext_modules += [Extension("mlpy.c_findpeaks",
-                          ["mlpy/findpeaks/c_findpeaks.c"],
-                          extra_compile_args=extra_compile_args,
-                          include_dirs=base_include),
-                Extension("mlpy.wavelet._dwt",
+
+# pure c modules
+ext_modules += [Extension("mlpy.wavelet._dwt",
                           ["mlpy/wavelet/dwt.c"],
                           extra_compile_args=extra_compile_args,
                           include_dirs=base_include,

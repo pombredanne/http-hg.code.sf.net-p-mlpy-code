@@ -21,9 +21,14 @@ __all__ = ["findpeaks_dist", "findpeaks_win"]
 import numpy as np
 cimport numpy as np
 cimport cython
-import c_findpeaks
+from stdlib cimport free
+
+cdef extern from "c_findpeaks.h":
+   int *fp_win(double *x, int n, int span, int *m)
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def findpeaks_win(x, span):
     """Find peaks with a sliding window of
     width `span`.
@@ -45,8 +50,26 @@ def findpeaks_win(x, span):
     >>> mlpy.findpeaks_win(x, span=3)
     array([ 0,  5,  7, 11, 14])
     """
+
+    cdef np.ndarray[np.float_t, ndim=1] xarr
+    cdef np.ndarray[np.int_t, ndim=1] ret
+    cdef int *retc
+    cdef int i, m
     
-    return c_findpeaks.findpeaks_win(x, span)
+    span = int(span)
+
+    if (span % 2 == 0) or (span < 3):
+        raise ValueError("span must be >= 3 and odd")
+    
+    xarr = np.ascontiguousarray(x, dtype=np.float)
+    retc = fp_win(<double *> xarr.data, <int> xarr.shape[0], <int> span, &m)
+    ret = np.empty(m, dtype=np.int)
+    
+    for i in range(m):
+        ret[i] = retc[i]
+            
+    free(retc)
+    return ret
 
 
 @cython.boundscheck(False)
@@ -77,15 +100,15 @@ def findpeaks_dist(x, mindist=2):
 
     cdef long i, j, mi
     cdef double mm
-    cdef np.ndarray[np.float64_t, ndim=1] _x
-    cdef np.ndarray[np.int64_t, ndim=1] idx
-    cdef np.ndarray[np.int64_t, ndim=1] tmp
+    cdef np.ndarray[np.float_t, ndim=1] _x
+    cdef np.ndarray[np.int_t, ndim=1] idx
+    cdef np.ndarray[np.int_t, ndim=1] tmp
     
     if mindist < 2:
         raise ValueError("mindist must be >= 2")
 
-    _x = np.ascontiguousarray(x, dtype=np.float64)
-    idx = c_findpeaks.findpeaks_win(x, 3)
+    _x = np.ascontiguousarray(x, dtype=np.float)
+    idx = findpeaks_win(_x, 3)
     tmp = np.empty_like(idx)
  
     j = 0
