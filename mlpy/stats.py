@@ -14,11 +14,15 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+__all__ = ['bootstrap_ci', 'quantile']
 
-import gsl
 import numpy as np
 
-__all__ = ['bootstrap_ci', 'quantile']
+import sys
+if sys.version >= '3':
+    from . import gsl
+else:
+    import gsl
 
 
 def bootstrap_ci(x, B=1000, alpha=0.05, seed=0):

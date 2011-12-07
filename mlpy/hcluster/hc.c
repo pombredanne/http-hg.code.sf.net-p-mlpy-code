@@ -608,9 +608,42 @@ static PyMethodDef hc_methods[] = {
 };
 
 
-/* Init */
-void initchc()
+#if PY_MAJOR_VERSION >= 3
+
+static struct PyModuleDef moduledef = {
+  PyModuleDef_HEAD_INIT,
+  "chc",
+  module_doc,
+  -1,
+  hc_methods,
+  NULL, NULL, NULL, NULL
+};
+
+PyObject *PyInit_chc(void)
 {
-  Py_InitModule3("chc", hc_methods, module_doc);
+  PyObject *m;
+  m = PyModule_Create(&moduledef);
+  if (!m) {
+    return NULL;
+  }
+
+  import_array();
+
+  return m;
+}
+
+#else
+
+PyMODINIT_FUNC initchc(void)
+{
+  PyObject *m;
+  
+  m = Py_InitModule3("chc", hc_methods, module_doc);
+  if (m == NULL) {
+    return;
+  }
+  
   import_array();
 }
+
+#endif

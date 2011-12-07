@@ -18,7 +18,12 @@ __all__ = ['HCluster']
 
 
 import numpy as np
-import chc
+
+import sys
+if sys.version >= '3':
+    from . import chc
+else:
+    import chc
 
 
 class HCluster:

@@ -2,16 +2,26 @@ from version import v as __version__
 import sys
 
 # extension modules
-import gsl
-from libsvm import *
-from liblinear import *
-from libml import *
-from findpeaks import *
-from kmeans import *
-from kernel import *
-from adatron import *
-from canberra import *
-
+if sys.version >= '3':
+    from . import gsl
+    from .libsvm import *
+    from .liblinear import *
+    from .libml import *
+    from .findpeaks import *
+    from .kmeans import *
+    from .kernel import *
+    from .adatron import *
+    from .canberra import *
+else:
+    import gsl
+    from libsvm import *
+    from liblinear import *
+    from libml import *
+    from findpeaks import *
+    from kmeans import *
+    from kernel import *
+    from adatron import *
+    from canberra import *
 
 # python modules
 from crossval import *

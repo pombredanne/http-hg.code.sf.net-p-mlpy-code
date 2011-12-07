@@ -17,7 +17,12 @@
 __all__ = ["Kernel", "KernelLinear", "KernelPolynomial", "KernelGaussian",
            "KernelExponential", "KernelSigmoid"]
 
-import kernel
+
+import sys
+if sys.version >= '3':
+    from . import kernel
+else:
+    import kernel
 
 class Kernel:
     """Base class for kernels.

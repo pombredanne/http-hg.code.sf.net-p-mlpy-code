@@ -321,9 +321,42 @@ static PyMethodDef uwt_methods[] = {
   {NULL, NULL, 0, NULL}
 };
 
-void init_uwt(void)
+#if PY_MAJOR_VERSION >= 3
+
+static struct PyModuleDef moduledef = {
+  PyModuleDef_HEAD_INIT,
+  "_uwt",
+  module_doc,
+  -1,
+  uwt_methods,
+  NULL, NULL, NULL, NULL
+};
+
+PyObject *PyInit__uwt(void)
 {
-  Py_InitModule3("_uwt", uwt_methods, module_doc); 
+  PyObject *m;
+  m = PyModule_Create(&moduledef);
+  if (!m) {
+    return NULL;
+  }
+
+  import_array();
+
+  return m;
+}
+
+#else
+
+PyMODINIT_FUNC init_uwt(void)
+{
+  PyObject *m;
+  
+  m = Py_InitModule3("_uwt", uwt_methods, module_doc);
+  if (m == NULL) {
+    return;
+  }
+  
   import_array();
 }
 
+#endif

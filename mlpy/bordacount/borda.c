@@ -117,9 +117,43 @@ static PyMethodDef borda_methods[] = {
   {NULL, NULL, 0, NULL}
 };
 
-/* Init */
-void initcborda()
+
+#if PY_MAJOR_VERSION >= 3
+
+static struct PyModuleDef moduledef = {
+  PyModuleDef_HEAD_INIT,
+  "cborda",
+  module_doc,
+  -1,
+  borda_methods,
+  NULL, NULL, NULL, NULL
+};
+
+PyObject *PyInit_cborda(void)
 {
-  Py_InitModule3("cborda", borda_methods, module_doc);
+  PyObject *m;
+  m = PyModule_Create(&moduledef);
+  if (!m) {
+    return NULL;
+  }
+
+  import_array();
+
+  return m;
+}
+
+#else
+
+PyMODINIT_FUNC initcborda(void)
+{
+  PyObject *m;
+  
+  m = Py_InitModule3("cborda", borda_methods, module_doc);
+  if (m == NULL) {
+    return;
+  }
+  
   import_array();
 }
+
+#endif

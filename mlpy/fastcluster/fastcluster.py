@@ -25,7 +25,13 @@ __version__ = '.'.join(__version_info__)
 from numpy import double, empty, array, ndarray, var, cov, dot, bool, expand_dims, ceil, sqrt
 from numpy.linalg import inv
 from scipy.spatial.distance import pdist
-from _fastcluster import linkage_wrap, linkage_vector_wrap
+
+import sys
+if sys.version >= '3':
+    from ._fastcluster import linkage_wrap, linkage_vector_wrap
+else:
+    from _fastcluster import linkage_wrap, linkage_vector_wrap
+
 
 def single(D):
     '''Single linkage clustering (alias). See the help on the “linkage”

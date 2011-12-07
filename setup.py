@@ -3,6 +3,12 @@ from distutils.sysconfig import *
 from distutils.util import *
 
 try:
+   from distutils.command.build_py import build_py_2to3 \
+        as build_py
+except ImportError:
+   from distutils.command.build_py import build_py
+
+try:
     from Cython.Distutils import build_ext
 except ImportError:
     use_cython = False
@@ -36,11 +42,13 @@ base_include = [py_include, numpy_include]
 
 scripts = []
 
+# cmdclass
+cmdclass = {'build_py': build_py}
+
 # Extension modules
-cmdclass = {}
 ext_modules = []
 if use_cython:
-    cmdclass.update({ 'build_ext': build_ext })
+    cmdclass.update({'build_ext': build_ext})
     ext_modules += [Extension("mlpy.gsl", ["mlpy/gsl/gsl.pyx"],
                               libraries=['gsl', 'gslcblas', 'm'],
                               include_dirs=base_include),
@@ -199,7 +207,7 @@ packages=['mlpy', 'mlpy.wavelet', 'mlpy.hcluster',
           'mlpy.bordacount', 'mlpy.fastcluster']
 
 setup(name = 'mlpy',
-      version='3.2',
+      version='3.2.1',
       requires=['numpy (>=1.3.0)', 'scipy (>=0.7.0)', 'gsl (>=1.14)'],
       description='mlpy - Machine Learning Py - ' \
           'High-Performance Python Package for Predictive Modeling',

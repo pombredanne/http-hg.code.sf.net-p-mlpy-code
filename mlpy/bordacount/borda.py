@@ -17,7 +17,12 @@
 __all__ = ['borda_count']
 
 import numpy as np
-import cborda
+
+import sys
+if sys.version >= '3':
+    from . import cborda
+else:
+    import cborda
 
 
 def borda_count(x, k=None):

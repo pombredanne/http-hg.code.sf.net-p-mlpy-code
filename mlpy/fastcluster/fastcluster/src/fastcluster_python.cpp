@@ -92,24 +92,17 @@ static void generate_SciPy_dendrogram(t_float * const Z, cluster_result & Z2, co
   }
 }
 
-/*
-  Python interface code
-*/
-static PyObject * linkage_wrap(PyObject * const self, PyObject * const args);
-static PyObject * linkage_vector_wrap(PyObject * const self, PyObject * const args);
 
-// List the C++ methods that this extension provides.
-static PyMethodDef _fastclusterWrapMethods[] = {
-  {"linkage_wrap", linkage_wrap, METH_VARARGS},
-  {"linkage_vector_wrap", linkage_vector_wrap, METH_VARARGS},
-  {NULL, NULL, 0, NULL}     /* Sentinel - marks the end of this structure */
-};
+
+
 
 // Tell Python about these methods.
+/* 
 PyMODINIT_FUNC init_fastcluster(void)  {
   (void) Py_InitModule("_fastcluster", _fastclusterWrapMethods);
   import_array();  // Must be present for NumPy. Called first after above line.
 }
+*/
 
 /*
   Interface to Python, part 1:
@@ -216,11 +209,11 @@ static PyObject *linkage_wrap(PyObject * const self, PyObject * const args) {
     return PyErr_NoMemory();
   }
   catch(std::exception& e){
-    PyErr_SetString(PyExc_StandardError, e.what());
+    PyErr_SetString(PyExc_Exception, e.what());
     return NULL;
   }
   catch(...){
-    PyErr_SetString(PyExc_StandardError,
+    PyErr_SetString(PyExc_Exception,
                     "C++ exception (unknown reason). Please send a bug report.");
     return NULL;
   }
@@ -907,17 +900,79 @@ static PyObject *linkage_vector_wrap(PyObject * const self, PyObject * const arg
     return PyErr_NoMemory();
   }
   catch(std::exception& e){
-    PyErr_SetString(PyExc_StandardError, e.what());
+    PyErr_SetString(PyExc_Exception, e.what());
     return NULL;
   }
   catch(pythonerror){
     return NULL;
   }
   catch(...){
-    PyErr_SetString(PyExc_StandardError,
+    PyErr_SetString(PyExc_Exception,
                     "C++ exception (unknown reason). Please send a bug report.");
     return NULL;
   }
   Py_RETURN_NONE;
 }
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif 
+
+// List the C++ methods that this extension provides.
+static PyMethodDef fastclusterWrapMethods[] = {
+  {"linkage_wrap",
+   (PyCFunction)linkage_wrap,
+   METH_VARARGS,
+   ""},
+  {"linkage_vector_wrap", 
+   (PyCFunction)linkage_vector_wrap, 
+   METH_VARARGS,
+   ""},
+  {NULL, NULL, 0, NULL}     /* Sentinel - marks the end of this structure */
+};
+
+
+#if PY_MAJOR_VERSION >= 3
+
+static struct PyModuleDef moduledef = {
+  PyModuleDef_HEAD_INIT,
+  "_fastcluster",
+  "",
+  -1,
+  fastclusterWrapMethods,
+  NULL, NULL, NULL, NULL
+};
+
+PyObject *PyInit__fastcluster(void)
+{
+  PyObject *m;
+  m = PyModule_Create(&moduledef);
+  if (!m) {
+    return NULL;
+  }
+
+  import_array();
+
+  return m;
+}
+
+#else
+
+PyMODINIT_FUNC init_fastcluster(void)
+{
+  PyObject *m;
+  
+  m = Py_InitModule3("_fastcluster", fastclusterWrapMethods, "");
+  if (m == NULL) {
+    return;
+  }
+  
+  import_array();
+}
+
+#endif
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif 

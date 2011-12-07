@@ -18,9 +18,13 @@ import numpy as np
 import scipy.linalg as spla
 from ridge import ridge_base
 from ols import ols_base
-import kernel
 from kernel_class import *
 
+import sys
+if sys.version >= '3':
+    from . import kernel
+else:
+    import kernel
 
 __all__ = ['LDA', 'SRDA', 'KFDA', 'PCA', 'PCAFast', 'KPCA']
 
