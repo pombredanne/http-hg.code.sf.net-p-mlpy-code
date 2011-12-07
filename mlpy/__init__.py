@@ -100,3 +100,4 @@ __all__ += ['KernelAdatron']
 __all__ += ['canberra', 'canberra_location', 'canberra_stability',
             'canberra_location_expected', 'canberra_location_max', 
             'canberra_stability_max']
+__all__ += ['KNN']
