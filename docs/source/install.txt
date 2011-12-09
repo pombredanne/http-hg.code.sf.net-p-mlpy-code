@@ -6,7 +6,7 @@ Installing on \*nix from source
 
 On GNU/Linux, OSX and FreeBSD you need the following requirements:
 
-   * Python 2.X
+   * Python >= 2.6 or 3.X
    * NumPy >= 1.3.0 (with header files)
    * SciPy >= 0.7.0
    * GSL >= 1.14 (with header files)
@@ -40,7 +40,7 @@ Installing on Windows Xp/Vista/7 from binary installer
 
 Requirements:
 
-   * Python 2.6 or 2.7 Windows installer
+   * Python 2.6, 2.7, 3.1, 3.2 Windows installer (x86)
    * NumPy >= 1.3.0 win32 installer
    * SciPy >= 0.8.0 win32 installer
 
