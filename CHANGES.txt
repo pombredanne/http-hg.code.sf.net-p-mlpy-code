@@ -1,3 +1,13 @@
+Version 3.2.1
+-------------
+Fix:
+ * fix stats import in __init__
+ * PLS: speed improved
+ * remove function declaration isn't a prototype warnings from libml
+ * clean findpeaks 
+ * mlpy works with python 3.X
+ * add KNN to __all__ 
+
 Version 3.2
 -----------
 New features:
