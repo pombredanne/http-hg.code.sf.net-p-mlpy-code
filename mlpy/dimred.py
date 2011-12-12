@@ -600,7 +600,7 @@ class PCA:
             raise ValueError("x must be a 2d array_like object")
         
         self._mean = np.mean(xarr, axis=0)
-        self._coeff, self._evals = pca(x, method='svd')
+        self._coeff, self._evals = pca(x, method=self._method)
 
         if self._whiten:
             self._coeff_inv = np.empty((self._coeff.shape[1], 
