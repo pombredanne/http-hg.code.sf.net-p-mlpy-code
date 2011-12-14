@@ -24,5 +24,35 @@ cdef extern from "src/ml.h":
         
     int compute_nn(NearestNeighbor *nn, int n, int d, double *x[], int y[],
                    int k, int dist)
-    int predict_nn(NearestNeighbor *nn, double x[],double **margin)
+    int predict_nn(NearestNeighbor *nn, double x[], double **margin)
     
+    ctypedef struct Node:
+        double **data
+        int *classes
+        int npoints
+        int nvar
+        int nclasses
+        int *npoints_for_class
+        double *priors
+        int node_class
+        int terminal
+        int left
+        int right
+        int var
+        double value
+        
+    ctypedef struct Tree:
+        int n
+        int d
+        double **x
+        int *y
+        int nclasses
+        int *classes
+        Node *node
+        int nnodes
+        int stumps
+        int minsize
+
+    int compute_tree(Tree *tree, int n, int d, double *x[], int y[],
+                   int stumps, int minsize)
+    int predict_tree(Tree *tree, double x[], double **margin)

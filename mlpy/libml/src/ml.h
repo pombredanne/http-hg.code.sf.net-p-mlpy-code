@@ -62,7 +62,7 @@ typedef struct
   int nclasses; /*number of classes*/
   int *npoints_for_class; /*number of elements for each class*/
   double *priors; /*prior probabilities for each class*/
-  int class; /*class associated to the ciurrent node*/
+  int node_class; /*class associated to the current node*/
   int terminal; /*is the node terminal? TRUE or FALSE*/
   int left; /*his left child*/
   int right; /*his right child*/

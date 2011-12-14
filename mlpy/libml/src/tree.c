@@ -118,7 +118,7 @@ int  compute_tree(Tree *tree,int n,int d,double *x[],
       max_node_points = tree->node[0].npoints_for_class[j];
       node_class_index = j;
     }
-  tree->node[0].class = tree->classes[node_class_index];
+  tree->node[0].node_class = tree->classes[node_class_index];
   
   sumpriors=.0;
   for(j=0;j < tree->nclasses;j++)
@@ -236,7 +236,7 @@ int predict_tree(Tree *tree, double x[],double **margin)
 	  if((*margin)[i] == (*margin)[which_max_post])
 	    return 0;
 
-      return tree->node[act_node].class;
+      return tree->node[act_node].node_class;
     }
     else{
       if(x[tree->node[act_node].var]<tree->node[act_node].value)
@@ -826,7 +826,7 @@ static void split_node(Node *node,Node *nodeL,Node *nodeR,int classes[],
   for(k=0;k<nclasses;k++)
     if(nodeL->npoints_for_class[k] > morenumerous){
       morenumerous = nodeL->npoints_for_class[k];
-      nodeL->class=classes[k];
+      nodeL->node_class=classes[k];
     }
   
 
@@ -851,7 +851,7 @@ static void split_node(Node *node,Node *nodeL,Node *nodeR,int classes[],
   for(k=0;k<nclasses;k++)
     if(nodeR->npoints_for_class[k] > morenumerous){
       morenumerous = nodeR->npoints_for_class[k];
-      nodeR->class=classes[k];
+      nodeR->node_class=classes[k];
     }
 
   free_imatrix(indx,  node->nvar,node->npoints);

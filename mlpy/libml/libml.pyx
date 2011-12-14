@@ -29,6 +29,7 @@ cdef class KNN:
     """
     cdef NearestNeighbor nn
     cdef int k
+    cdef int *classes
 
     def __cinit__(self, k):
         """Initialization.
@@ -42,27 +43,28 @@ cdef class KNN:
         self.nn.y = NULL
         self.nn.classes = NULL
         self.k = int(k)
+        self.classes = NULL
         
     def learn(self, x, y):
         """Learn method.
         
         :Parameters:	
-           x : 2d array_like object (N x P)
+           x : 2d array_like object (N,P)
               training data 
            y : 1d array_like integer 
-              class labels (-1 or 1 for binary classification,
-              1,..., nclasses for multiclass classification)
+              class labels
         """
 
         cdef int ret
         cdef np.ndarray[np.float_t, ndim=2] xarr
-        cdef np.ndarray[np.int32_t, ndim=1] yarr
+        cdef np.ndarray[np.int_t, ndim=1] yarr
+        cdef np.ndarray[np.int32_t, ndim=1] ynew
         cdef double *xp
         cdef double **xpp
         cdef int i
 
         xarr = np.ascontiguousarray(x, dtype=np.float)
-        yarr = np.ascontiguousarray(y, dtype=np.int32)
+        yarr = np.ascontiguousarray(y, dtype=np.int)
         
         if self.k > xarr.shape[0]:
             raise ValueError("k must be smaller than number of samples")
@@ -70,24 +72,32 @@ cdef class KNN:
         yu = np.unique(yarr)
         if yu.shape[0] <= 1:
             raise ValueError("y: number of classes must be >=2")
-        if yu.shape[0] == 2:
-            if not np.all(yu == np.array([-1, 1])):
-                raise ValueError("y: for binary classification"
-                                 "classes must be -1, 1")
-        else:
-            if not np.all(yu == np.arange(1, yu.shape[0]+1)):
-                raise ValueError("y: for %d-class classification"
-                                 "classes must be 1, ...,%d" \
-                                     % (yu.shape[0], yu.shape[0]))           
 
+        self._free()
+        
+        # save original labels
+        self.classes = <int *> malloc (yu.shape[0] * sizeof(int))
+        for i in range(yu.shape[0]):
+            self.classes[i] = yu[i]
+        
+        # transform labels
+        ynew = np.empty(yarr.shape[0], dtype=np.int32)
+        if yu.shape[0] == 2:
+            cond_neg = (yarr == yu[0])
+            cond_pos = (yarr == yu[1])
+            ynew[cond_neg], ynew[cond_pos] = -1, 1
+        else:
+            for i in range(yu.shape[0]):
+                cond = (yarr == yu[i])
+                ynew[cond] = i + 1
+    
         xp = <double *> xarr.data
         xpp = <double **> malloc (xarr.shape[0] * sizeof(double*))
         for i in range(xarr.shape[0]):
             xpp[i] = xp + (i * xarr.shape[1])
         
-        self._free()
         ret = compute_nn(&self.nn, <int> xarr.shape[0], <int> xarr.shape[1],
-                          xpp, <int *> yarr.data, self.k, DIST_EUCLIDEAN)
+                          xpp, <int *> ynew.data, self.k, DIST_EUCLIDEAN)
         free(xpp)
 
         if ret == 1:
@@ -101,10 +111,10 @@ cdef class KNN:
               test point(s)
               
         :Returns:
-	   p : the predicted value(s) on success:
-           -1 or 1 for binary classification, 1, ..., nclasses 
-           for multiclass classification, 0 on succes with non 
-           unique classification
+	   p : int or 1d numpy array
+              the predicted value(s). Retuns the smallest label
+              minus one (KNN.labels()[0]-1) when the classification
+              is not unique.
         """
         
         cdef int i
@@ -129,18 +139,35 @@ cdef class KNN:
             free(margin)
             if p == -2:
                 raise MemoryError("out of memory")
+            elif p == 0:
+                ret = self.classes[0] - 1
+            else:
+                if self.nn.nclasses == 2:
+                    if p == -1: ret = self.classes[0]
+                    else: ret = self.classes[1]
+                else:
+                    ret = self.classes[p-1]
+
         else:
-            p = np.empty(tarr.shape[0], dtype=np.int)
+            ret = np.empty(tarr.shape[0], dtype=np.int)
             for i in range(tarr.shape[0]):
                 tiarr = tarr[i]
                 tdata = <double *> tiarr.data
-                p[i] = predict_nn(&self.nn, tdata, &margin)
+                p = predict_nn(&self.nn, tdata, &margin)
                 free(margin)
-            if -2 in p:
-                raise MemoryError("out of memory")
-        
-        return p
-
+                if p == -2:
+                    raise MemoryError("out of memory")
+                elif p == 0:
+                    ret[i] = self.classes[0] - 1
+                else:
+                    if self.nn.nclasses == 2:
+                        if p == -1: ret[i] = self.classes[0]
+                        else: ret[i] = self.classes[1]
+                    else:
+                        ret[i] = self.classes[p-1]
+            
+        return ret
+            
     def nclasses(self):
         """Returns the number of classes.
         """
@@ -159,7 +186,7 @@ cdef class KNN:
         
         ret = np.empty(self.nn.nclasses, dtype=np.int)
         for i in range(self.nn.nclasses):
-            ret[i] = self.nn.classes[i]
+            ret[i] = self.classes[i]
 
         return ret
 
@@ -175,7 +202,213 @@ cdef class KNN:
         if self.nn.classes is not NULL:
             free(self.nn.classes)
 
+        if self.classes is not NULL:
+            free(self.classes)
 
     def __dealloc__(self):
         self._free()
 
+
+cdef class ClassTree:
+    """Classification Tree (gini index).
+    """
+    cdef Tree tree
+    cdef int stumps
+    cdef int minsize
+    cdef int *classes
+ 
+    def __cinit__(self, stumps=False, minsize=0):
+        """Initialization.
+        
+        :Parameters:
+           stumps : bool
+              True: compute single split or False: standard tree
+           minsize : int (>=0)
+              minimum number of cases required to split a leaf
+        """
+
+        self.tree.x = NULL
+        self.tree.y = NULL
+        self.tree.classes = NULL
+        self.tree.node = NULL
+        self.classes = NULL
+
+        self.stumps = int(bool(stumps))
+        self.minsize = int(minsize)
+
+        if self.minsize < 0:
+            raise ValueError("minsize must be >= 0")
+        
+    def learn(self, x, y):
+        """Learn method.
+        
+        :Parameters:	
+           x : 2d array_like object (N x P)
+              training data 
+           y : 1d array_like integer 
+              class labels
+        """
+
+        cdef int ret
+        cdef np.ndarray[np.float_t, ndim=2] xarr
+        cdef np.ndarray[np.int_t, ndim=1] yarr
+        cdef np.ndarray[np.int32_t, ndim=1] ynew
+        cdef double *xp
+        cdef double **xpp
+        cdef int i
+
+        xarr = np.ascontiguousarray(x, dtype=np.float)
+        yarr = np.ascontiguousarray(y, dtype=np.int)
+       
+        yu = np.unique(yarr)
+        if yu.shape[0] <= 1:
+            raise ValueError("y: number of classes must be >=2")
+        
+        self._free()
+
+        # save original labels
+        self.classes = <int *> malloc (yu.shape[0] * sizeof(int))
+        for i in range(yu.shape[0]):
+            self.classes[i] = yu[i]
+            
+        # transform labels
+        ynew = np.empty(yarr.shape[0], dtype=np.int32)
+        if yu.shape[0] == 2:
+            cond_neg = (yarr == yu[0])
+            cond_pos = (yarr == yu[1])
+            ynew[cond_neg], ynew[cond_pos] = -1, 1
+        else:
+            for i in range(yu.shape[0]):
+                cond = (yarr == yu[i])
+                ynew[cond] = i + 1
+
+        xp = <double *> xarr.data
+        xpp = <double **> malloc (xarr.shape[0] * sizeof(double*))
+        for i in range(xarr.shape[0]):
+            xpp[i] = xp + (i * xarr.shape[1])
+        
+        ret = compute_tree(&self.tree, <int> xarr.shape[0], <int> xarr.shape[1],
+                          xpp, <int *> ynew.data, self.stumps, self.minsize)
+        free(xpp)
+
+        if ret == 1:
+            raise MemoryError("out of memory")
+        
+    def pred(self, t):
+        """Predict Tree model on a test point(s).
+        
+        :Parameters:
+           t : 1d or 2d array_like object ([M,] P)
+              test point(s)
+              
+        :Returns:
+	   p : int or 1d numpy array
+              the predicted value(s). Retuns the smallest label
+              minus one (ClassTree.labels()[0]-1) when the classification
+              is not unique.          
+        """ 
+        
+        cdef int i, p
+        cdef np.ndarray[np.float_t, ndim=1] tiarr
+        cdef double *margin
+        cdef double *tdata
+        
+
+        if self.tree.x is NULL:
+            raise ValueError("no model computed")
+        
+        tarr = np.ascontiguousarray(t, dtype=np.float)
+        if tarr.ndim > 2:
+            raise ValueError("t must be an 1d or a 2d array_like object")
+
+        if tarr.shape[-1] != self.tree.d:
+            raise ValueError("t, model: shape mismatch")
+
+        if tarr.ndim == 1:
+            tiarr = tarr
+            p = predict_tree(&self.tree, <double *> tiarr.data, &margin)
+            free(margin)
+            if p == -2:
+                raise MemoryError("out of memory")
+            elif p == 0:
+                ret = self.classes[0] - 1
+            else:
+                if self.tree.nclasses == 2:
+                    if p == -1: ret = self.classes[0]
+                    else: ret = self.classes[1]
+                else:
+                    ret = self.classes[p-1]
+
+        else:
+            ret = np.empty(tarr.shape[0], dtype=np.int)
+            for i in range(tarr.shape[0]):
+                tiarr = tarr[i]
+                tdata = <double *> tiarr.data
+                p = predict_tree(&self.tree, tdata, &margin)
+                free(margin)
+                if p == -2:
+                    raise MemoryError("out of memory")
+                elif p == 0:
+                    ret[i] = self.classes[0] - 1
+                else:
+                    if self.tree.nclasses == 2:
+                        if p == -1: ret[i] = self.classes[0]
+                        else: ret[i] = self.classes[1]
+                    else:
+                        ret[i] = self.classes[p-1]
+            
+        return ret
+
+    def nclasses(self):
+        """Returns the number of classes.
+        """
+        
+        if self.tree.x is NULL:
+            raise ValueError("no model computed")
+
+        return self.tree.nclasses
+
+    def labels(self):
+        """Outputs the name of labels.
+        """
+        
+        if self.tree.x is NULL:
+            raise ValueError("no model computed")
+        
+        ret = np.empty(self.tree.nclasses, dtype=np.int)
+        for i in range(self.tree.nclasses):
+            ret[i] = self.classes[i]
+
+        return ret
+
+    def _free(self):
+        cdef int i
+        
+        if self.tree.x is not NULL:
+            for i in range(self.tree.n):
+                free(self.tree.x[i])
+            free(self.tree.x)
+
+        if self.tree.y is not NULL:
+            free(self.tree.y)
+        
+        if self.tree.classes is not NULL:
+            free(self.tree.classes)
+            
+        if self.tree.node is not NULL:
+            free(self.tree.node[0].npoints_for_class)
+            free(self.tree.node[0].priors)
+
+            for i in range(1, self.tree.nnodes):
+                free(self.tree.node[i].data)
+                free(self.tree.node[i].classes)
+                free(self.tree.node[i].npoints_for_class)
+                free(self.tree.node[i].priors)
+            
+            free(self.tree.node)
+    
+        if self.classes is not NULL:
+            free(self.classes)
+
+    def __dealloc__(self):
+        self._free()

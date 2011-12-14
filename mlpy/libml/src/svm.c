@@ -5,7 +5,7 @@
 
 static void svm_smo(SupportVectorMachine *svm);
 static int examineExample(int i1, SupportVectorMachine *svm);
-static int takeStep(int i1, int i2, SupportVectorMachine *svm;);
+static int takeStep(int i1, int i2, SupportVectorMachine *svm);
 
 static double learned_func_linear(int k, SupportVectorMachine *svm);
 static double learned_func_nonlinear(int k, SupportVectorMachine *svm);
@@ -1000,9 +1000,7 @@ static int examineExample(i1,svm)
 }
 
 
-static int takeStep(i1,i2,svm)
-     int i1,i2;
-     SupportVectorMachine *svm;
+static int takeStep(int i1, int i2, SupportVectorMachine *svm)
 {
   int y1,y2,s;
   double alph1,alph2;
