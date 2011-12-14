@@ -56,3 +56,17 @@ cdef extern from "src/ml.h":
     int compute_tree(Tree *tree, int n, int d, double *x[], int y[],
                    int stumps, int minsize)
     int predict_tree(Tree *tree, double x[], double **margin)
+
+    ctypedef struct MaximumLikelihood:
+        int nclasses
+        int *classes
+        int *npoints_for_class
+        int d
+        double **mean
+        double ***covar        
+        double ***inv_covar
+        double *priors
+        double *det
+
+    int compute_ml(MaximumLikelihood *ml, int n, int d, double *x[], int y[])
+    int predict_ml(MaximumLikelihood *ml, double x[], double **margin)
