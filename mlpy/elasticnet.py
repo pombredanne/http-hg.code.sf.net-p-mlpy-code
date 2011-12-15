@@ -279,7 +279,7 @@ class ElasticNetC(ElasticNet):
         :Parameters:
           x : 2d array_like object (N x P)
             matrix
-          y : 1d array_like object integer (1 or -1) (N)
+          y : 1d array_like object integer (N)
             class labels
         """
 
