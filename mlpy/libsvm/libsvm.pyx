@@ -199,7 +199,7 @@ cdef class LibSvm:
         
         self.problem.x = array2d_to_node(xarr)
         self.problem.y = array1d_to_vector(yarr)
-        self.problem.l = x.shape[0]
+        self.problem.l = xarr.shape[0]
                 
     def learn(self, x, y):
         """Constructs the model.
