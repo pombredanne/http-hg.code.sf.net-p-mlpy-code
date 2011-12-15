@@ -1,3 +1,15 @@
+Version 3.3.0
+-------------
+New features:
+ * Maximum Likelihood Classifier (MaximumLikelihoodC) added
+ * Classification Tree added;
+ * KNN: remove labels restrictions
+
+Fix:
+ * fix elasticnet classifier doc
+ * fix PCA (method paramenter): PCA method was always svd 
+ * setup.py: fix classifiers
+
 Version 3.2.1
 -------------
 Fix:
