@@ -32,7 +32,11 @@
 
 #ifndef INT32_MAX
 #define __STDC_LIMIT_MACROS
+#ifdef _WIN32
+#include "stdint.h"
+#else
 #include <stdint.h>
+#endif
 #endif
 
 typedef int_fast32_t t_index;

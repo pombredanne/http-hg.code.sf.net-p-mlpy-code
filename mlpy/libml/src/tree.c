@@ -210,10 +210,11 @@ int predict_tree(Tree *tree, double x[],double **margin)
 {
   int i;
   int act_node;
-  act_node=0;
   int max_post;
   int which_max_post;
   
+  act_node=0;
+
   for(;;){
     if(tree->node[act_node].terminal){
 

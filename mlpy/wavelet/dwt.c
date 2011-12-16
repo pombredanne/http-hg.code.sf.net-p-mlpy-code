@@ -37,6 +37,8 @@ static PyObject *dwt_dwt(PyObject *self, PyObject *args, PyObject *keywds)
   int k, n;
   double *_xcopy;
   PyObject *centered = Py_False;
+  gsl_wavelet *w;
+  gsl_wavelet_workspace *work;
 
   /* Parse Tuple*/
   static char *kwlist[] = {"x", "wf", "k", "centered", NULL};
@@ -50,9 +52,6 @@ static PyObject *dwt_dwt(PyObject *self, PyObject *args, PyObject *keywds)
   
   n = (int) PyArray_DIM(xcopy, 0);
   _xcopy = (double *) PyArray_DATA(xcopy);
-  
-  gsl_wavelet *w;
-  gsl_wavelet_workspace *work;
   
   switch (wf)
     {
@@ -101,6 +100,8 @@ static PyObject *dwt_idwt(PyObject *self, PyObject *args, PyObject *keywds)
   int k, n;
   double *_xcopy;
   PyObject *centered = Py_False;
+  gsl_wavelet *w;
+  gsl_wavelet_workspace *work;
 
   /* Parse Tuple*/
   static char *kwlist[] = {"X", "wf", "k", "centered", NULL};
@@ -115,10 +116,7 @@ static PyObject *dwt_idwt(PyObject *self, PyObject *args, PyObject *keywds)
   
   n = (int) PyArray_DIM(xcopy, 0);
   _xcopy = (double *) PyArray_DATA(xcopy);
-  
-  gsl_wavelet *w;
-  gsl_wavelet_workspace *work;
-  
+ 
   switch (wf)
     {
     case 'd':

@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include <float.h>
 #include <math.h>
-#include <stdbool.h>
 
 #define MAX( A , B ) ((A) > (B) ? (A) : (B))
 #define MIN( A , B ) ((A) < (B) ? (A) : (B))
@@ -380,32 +379,32 @@ cutree(long n, long *ia, long *ib, double *height,
 {
   long i;
   long k, l, nclust, m1, m2, j;
-  bool *sing, flag;
+  short int *sing, flag;
   long *m_nr, *z;
   long which;
   
   /* compute which (number of clusters at height ht) */
   
   height[n-1] = DBL_MAX;
-  flag = false;
+  flag = 0;
   i = 0;
   while(!flag)
     {
       if(height[i] > ht)
-	  flag = true;
+	  flag = 1;
       i++;     
     }
   
   which = n + 1 - i;
 
   /* using 1-based indices ==> "--" */
-  sing = (bool *) malloc(n * sizeof(bool)); sing--;
+  sing = (short int *) malloc(n * sizeof(short int)); sing--;
   m_nr = (long *) malloc(n * sizeof(long)); m_nr--;
   z    = (long *) malloc(n * sizeof(long)); z--;
   
   for(k = 1; k <= n; k++)
     {
-      sing[k] = true;  /* is k-th obs. still alone in cluster ? */
+      sing[k] = 1;  /* is k-th obs. still alone in cluster ? */
       m_nr[k] = 0;     /* containing last merge-step number of k-th obs. */
     }
   
@@ -419,7 +418,7 @@ cutree(long n, long *ia, long *ib, double *height,
 	{   
 	  /* merging atoms [-m1] and [-m2] */
 	  m_nr[-m1] = m_nr[-m2] = k;
-	  sing[-m1] = sing[-m2] = false;
+	  sing[-m1] = sing[-m2] = 0;
 	}
       else 
 	if(m1 < 0 || m2 < 0)
@@ -439,7 +438,7 @@ cutree(long n, long *ia, long *ib, double *height,
 		m_nr[l] = k;
 	    
 	    m_nr[j] = k;
-	    sing[j] = false;
+	    sing[j] = 0;
 	  }
 	else
 	  {

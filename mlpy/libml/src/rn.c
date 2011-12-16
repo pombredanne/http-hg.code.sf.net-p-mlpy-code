@@ -4,10 +4,10 @@
 #include "ml.h"
 
 int compute_rn(RegularizationNetwork *rn,int n,int d,
-                 double *x[],double y[],double lambda,double sigma)
+	       double *x[],double y[],double lambda,double sigma)
 {
   int i,j;
-
+  double **K,**inv_K;
 
   rn->n=n;
   rn->d=d;
@@ -15,11 +15,6 @@ int compute_rn(RegularizationNetwork *rn,int n,int d,
   rn->y=y;
   rn->lambda=lambda;
   rn->sigma=sigma;
-
-
-  double **K,**inv_K;
-
-
 
   K=dmatrix(n,n);
   inv_K=dmatrix(n,n);
@@ -35,20 +30,17 @@ int compute_rn(RegularizationNetwork *rn,int n,int d,
     return 1;
   }
 
-  
-
   free_dmatrix(K,n,n);
-
+  
   rn->c=dvector(n);
   
   for(i=0;i<n;i++){
     rn->c[i]=0.0;
-
+    
     for(j=0;j<n;j++)
-      rn->c[i] += inv_K[i][j]*y[j];
-
+      rn->c[i] += inv_K[i][j]*y[j]; 
   }
-
+  
   free_dmatrix(inv_K,n,n);
   return 0;
 }

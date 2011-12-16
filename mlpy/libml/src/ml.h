@@ -28,32 +28,32 @@
 
 /*NN*/
 
-typedef struct
+typedef struct NearestNeighbor
 {
   int n; /*number of examples*/
   int d; /*number of variables*/
   double **x; /*the data*/
   int *y; /*their classes*/
   int nclasses; /*the number of classes*/
-  int *classes; /*the classes*/;
+  int *classes; /*the classes*/
   int k;  /*number of nn (for the test phase)*/
   int dist;  /*type of distance (for the test phase)*/
 } NearestNeighbor;
 
-typedef struct
+typedef struct ENearestNeighbor
 {
   NearestNeighbor *nn; /*the nn's*/
   int nmodels; /*number of nn models*/
   double *weights; /*models weights*/
   int nclasses; /*the number of classes*/
-  int *classes; /*the classes*/;
+  int *classes; /*the classes*/
   int k;/*number of nn (for the test phase)*/
   int dist;  /*type of distance (for the test phase)*/
 } ENearestNeighbor;
 
 /*TREE*/
 
-typedef struct
+typedef struct Node
 {
   double **data; /*data contained into the node*/
   int *classes; /*classes of the data*/
@@ -71,27 +71,27 @@ typedef struct
 } Node;
 
 
-typedef struct
+typedef struct Tree
 {
   int n; /*number of examples*/
   int d; /*number of variables*/
   double **x; /*the data*/
   int *y; /*their classes*/
   int nclasses; /*the number of classes*/
-  int *classes; /*the classes*/;
+  int *classes; /*the classes*/
   Node *node; /*the nodes*/
   int nnodes; /*number of nodes*/
   int stumps; /*if it is stamps: TRUE or FALSE*/
   int minsize; /*minsize for splitting a node*/
 } Tree;
 
-typedef struct
+typedef struct ETree
 {
   Tree *tree; /*the trees*/
   int nmodels; /*number of trees*/
   double *weights; /*models weights*/
   int nclasses; /*the number of classes*/
-  int *classes; /*the classes*/;
+  int *classes; /*the classes*/
 } ETree;
 
 /*SVM*/
@@ -123,9 +123,9 @@ typedef struct SupportVectorMachine
   int convergence; /*to assess convergence*/
   int verbose; /*verbosity */
   double **K; /*precomputed kernel matrix (for RSFN)*/
-}SupportVectorMachine;
+} SupportVectorMachine;
 
-typedef struct
+typedef struct ESupportVectorMachine
 {
   SupportVectorMachine *svm; /*the svm's*/
   int nmodels; /*number of svm's*/
@@ -134,7 +134,7 @@ typedef struct
 
 /*ML*/
 
-typedef struct
+typedef struct MaximumLikelihood
 {
   int nclasses; /*number of classes*/
   int *classes; /*array of the class names*/
@@ -151,19 +151,19 @@ typedef struct
 		 covariance matrix*/
 } MaximumLikelihood;
 
-typedef struct
+typedef struct EMaximumLikelihood
 {
   MaximumLikelihood *ml; /*the ml's*/
   int nmodels; /*number of ml's*/
   double *weights; /*models weights*/
   int nclasses; /*the number of classes*/
-  int *classes; /*the classes*/;
+  int *classes; /*the classes*/
 } EMaximumLikelihood;
 
 
 /*RSFN*/
 
-typedef struct
+typedef struct SlopeFunctions
 {
   double *w;
   double *b;
@@ -172,23 +172,23 @@ typedef struct
   int nsf;
 } SlopeFunctions;
 
-typedef struct
+typedef struct RegularizedSlopeFunctionNetworks
 {
   double **x;
   int d;
   SupportVectorMachine svm;
   SlopeFunctions sf;
   double threshold;
-}RegularizedSlopeFunctionNetworks;
+} RegularizedSlopeFunctionNetworks;
 
-typedef struct
+typedef struct ERegularizedSlopeFunctionNetworks
 {
   RegularizedSlopeFunctionNetworks *rsfn; 
   int nmodels; 
   double *weights;
 } ERegularizedSlopeFunctionNetworks;
 
-typedef struct
+typedef struct RegularizationNetwork
 {
   int n; /*number of examples*/
   int d; /*number of variables*/
@@ -200,7 +200,7 @@ typedef struct
 } RegularizationNetwork;
 
 
-typedef struct
+typedef struct TerminatedRamps
 {
   double **w;
   double *alpha;
@@ -212,7 +212,7 @@ typedef struct
   int ntr;
 } TerminatedRamps;
 
-typedef struct
+typedef struct TerminatedRampsRegularizationNetwork
 {
   int n; /*number of examples*/
   int d; /*number of variables*/
