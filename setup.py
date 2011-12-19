@@ -24,11 +24,11 @@ data_files = []
 # Include gsl libs for the win32 distribution
 if get_platform() == "win32":
    dlls = ["mlpy\gslwin\gsl.lib",
-           "mlpy\gslwin\gslcblas.lib"]
+           "mlpy\gslwin\cblas.lib"]
    data_files += [("Lib\site-packages\mlpy", dlls)]
    
 #### libs
-gsl_lib = ['gsl', 'gslcblas']
+gsl_lib = ['gsl', 'cblas']
 if get_platform() == "win32":
    math_lib = []
 else:
