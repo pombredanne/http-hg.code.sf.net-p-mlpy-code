@@ -10,7 +10,7 @@ On GNU/Linux, OSX and FreeBSD you need the following requirements:
    * Python >= 2.6 or 3.X
    * NumPy >= 1.3.0 (with header files)
    * SciPy >= 0.7.0
-   * GSL >= 1.14 (with header files)
+   * GSL >= 1.11 (with header files)
 
 From a terminal run:
 
@@ -45,6 +45,6 @@ Requirements:
    * NumPy >= 1.3.0 win32 installer
    * SciPy >= 0.8.0 win32 installer
 
-The GSL library is pre-compiled (by MinGW) and included in mlpy.
+The GSL library is pre-compiled (by Visual Studio Express 2008) and included in mlpy.
 
 Download end run the mlpy Windows installer (.exe).
