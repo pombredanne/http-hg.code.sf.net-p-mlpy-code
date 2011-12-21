@@ -28,10 +28,11 @@ if get_platform() == "win32":
    data_files += [("Lib\site-packages\mlpy", dlls)]
    
 #### libs
-gsl_lib = ['gsl', 'cblas']
 if get_platform() == "win32":
+   gsl_lib = ['gsl', 'cblas']
    math_lib = []
 else:
+   gsl_lib = ['gsl', 'gslcblas']
    math_lib = ['m']
    
 #### Extra compile args
@@ -117,6 +118,9 @@ if use_cython:
                              ["mlpy/findpeaks/c_findpeaks.c",
                               "mlpy/findpeaks/findpeaks.pyx"],
                              include_dirs=py_inc + np_inc),
+                   Extension("mlpy.dtw", ["mlpy/dtw/dtw.pyx"],
+                             libraries=[],
+                             include_dirs=py_inc + np_inc),
                    ]
 else:
    ext_modules += [Extension("mlpy.gsl", ["mlpy/gsl/gsl.c"],
@@ -178,6 +182,9 @@ else:
                    Extension("mlpy.findpeaks",
                              ["mlpy/findpeaks/c_findpeaks.c",
                               "mlpy/findpeaks/findpeaks.c"],
+                             include_dirs=py_inc + np_inc),
+                   Extension("mlpy.dtw", ["mlpy/dtw/dtw.c"],
+                             libraries=[],
                              include_dirs=py_inc + np_inc),
                    ]
    

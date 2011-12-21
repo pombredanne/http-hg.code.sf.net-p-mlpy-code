@@ -47,4 +47,4 @@ Requirements:
 
 The GSL library is pre-compiled (by Visual Studio Express 2008) and included in mlpy.
 
-Download end run the mlpy Windows installer (.exe).
+Download and run the mlpy Windows installer (.exe).
