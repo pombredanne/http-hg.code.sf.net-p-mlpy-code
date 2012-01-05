@@ -118,8 +118,15 @@ if use_cython:
                              ["mlpy/findpeaks/c_findpeaks.c",
                               "mlpy/findpeaks/findpeaks.pyx"],
                              include_dirs=py_inc + np_inc),
-                   Extension("mlpy.dtw", ["mlpy/dtw/dtw.pyx"],
-                             libraries=[],
+                   Extension("mlpy.dtw", 
+                             ["mlpy/dtw/cdtw.c",
+                             "mlpy/dtw/dtw.pyx"],
+                             libraries=math_lib,
+                             include_dirs=py_inc + np_inc),
+                   Extension("mlpy.lcs", 
+                             ["mlpy/lcs/clcs.c",
+                              "mlpy/lcs/lcs.pyx"],
+                             libraries=math_lib,
                              include_dirs=py_inc + np_inc),
                    ]
 else:
@@ -183,8 +190,15 @@ else:
                              ["mlpy/findpeaks/c_findpeaks.c",
                               "mlpy/findpeaks/findpeaks.c"],
                              include_dirs=py_inc + np_inc),
-                   Extension("mlpy.dtw", ["mlpy/dtw/dtw.c"],
-                             libraries=[],
+                   Extension("mlpy.dtw",
+                             ["mlpy/dtw/cdtw.c",
+                              "mlpy/dtw/dtw.c"],
+                             libraries=math_lib,
+                             include_dirs=py_inc + np_inc),
+                   Extension("mlpy.lcs",
+                             ["mlpy/lcs/clcs.c",
+                              "mlpy/lcs/lcs.c"],
+                             libraries=math_lib,
                              include_dirs=py_inc + np_inc),
                    ]
    
@@ -238,7 +252,7 @@ classifiers = ['Development Status :: 5 - Production/Stable',
                ]
 
 setup(name = 'mlpy',
-      version='3.3.0',
+      version='3.4.0',
       requires=['numpy (>=1.3.0)', 'scipy (>=0.7.0)', 'gsl (>=1.11)'],
       description='mlpy - Machine Learning Py - ' \
          'High-Performance Python Package for Predictive Modeling',

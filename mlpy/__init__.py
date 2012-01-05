@@ -12,7 +12,8 @@ if sys.version >= '3':
     from .kernel import *
     from .adatron import *
     from .canberra import *
-    #from .dtw import *
+    from .dtw import *
+    from .lcs import *
 else:
     import gsl
     from libsvm import *
@@ -23,7 +24,8 @@ else:
     from kernel import *
     from adatron import *
     from canberra import *
-    #from dtw import *
+    from dtw import *
+    from lcs import *
 
 # python modules
 from crossval import *
@@ -103,4 +105,5 @@ __all__ += ['canberra', 'canberra_location', 'canberra_stability',
             'canberra_location_expected', 'canberra_location_max', 
             'canberra_stability_max']
 __all__ += ['KNN', 'ClassTree', 'MaximumLikelihoodC']
-#__all__ += ['dtw']
+__all__ += ['dtw_std', 'dtw_subsequence']
+__all__ += ['lcs_std']

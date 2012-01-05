@@ -42,6 +42,8 @@ included in mlpy.
    canberra
    borda
    findpeaks
+   dtw
+   lcs
    wavelet
    scaling
 

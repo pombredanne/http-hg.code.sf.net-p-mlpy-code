@@ -1,0 +1,14 @@
+.. currentmodule:: mlpy
+
+Dynamic Time Warping (DTW)
+==========================
+
+Standard DTW
+------------
+
+.. autofunction:: dtw_std(x, y, dist_only=True)
+
+Subsequence DTW
+---------------
+
+.. autofunction:: dtw_subsequence(x, y)
