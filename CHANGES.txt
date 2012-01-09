@@ -1,3 +1,15 @@
+Version 3.4.0
+-------------
+New features:
+ * Standard DTW added
+ * Subsequence DTW added
+ * Standard LCS added
+
+Fix:
+ * LibSvm: fix error when x is a list in learn() method
+ * fix code for vc++ 
+ * fix setup.py (cblas)
+
 Version 3.3.0
 -------------
 New features:
