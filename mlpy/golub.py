@@ -26,7 +26,7 @@ class Golub:
     as w_i = (mu_i(+) - mu_i(-)) / (std_i(+) + std_i(-)) and 
     mu id defined as (mu(+) + mu(-)) / 2.
 
-    .. [Golub99] T. R. Golub et al. Molecular classification of cancer: Class discovery and class prediction by gene expression monitoring. Science, 1999.
+    .. [Golub99] T R Golub et al. Molecular classification of cancer: Class discovery and class prediction by gene expression monitoring. Science, 1999.
     """
     
     def __init__(self):

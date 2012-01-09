@@ -56,7 +56,7 @@ def lcs_std(x, y):
     >>> path
     (array([1, 2, 3, 5]), array([0, 2, 4, 5]))   
 
-    .. [Cormen01] H. Cormen et al.. Introduction to Algorithms, Second Edition. The MIT Press, 2001.
+    .. [Cormen01] H Cormen et al.. Introduction to Algorithms, Second Edition. The MIT Press, 2001.
     """
 
     cdef np.ndarray[np.int_t, ndim=1] x_arr

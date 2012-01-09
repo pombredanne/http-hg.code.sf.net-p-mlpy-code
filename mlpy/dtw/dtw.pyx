@@ -45,7 +45,7 @@ def dtw_std(x, y, dist_only=True):
        path : tuple of two 1d numpy array (path_x, path_y) [if dist_only=False]
           warp path
     
-    .. [Muller07] M. Muller. Information Retrieval for Music and Motion. Springer, 2007.
+    .. [Muller07] M Muller. Information Retrieval for Music and Motion. Springer, 2007.
     """
 
     cdef np.ndarray[np.float_t, ndim=1] x_arr

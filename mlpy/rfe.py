@@ -53,7 +53,7 @@ def rfe_kfda(x, y, p, lmb, kernel):
     proposed in [Louw06]_. The algorithm works with only two
     classes.
     
-    .. [Louw06] N. Louw and S. J. Steel. Variable selection in kernel Fisher discriminant analysis by means of recursive feature elimination. Journal Computational Statistics & Data Analysis, 2006.
+    .. [Louw06] N Louw and S J Steel. Variable selection in kernel Fisher discriminant analysis by means of recursive feature elimination. Journal Computational Statistics & Data Analysis, 2006.
     
     :Parameters:
        x: 2d array_like object (N,P)
@@ -133,7 +133,7 @@ def rfe_w2(x, y, p, classifier):
     classes. `classifier` must be an object with learn() and
     w() methods.
         
-    .. [Guyon02] I. Guyon, J. Weston, S. Barnhill and V. Vapnik. Gene Selection for Cancer Classification using Support Vector Machines. Machine Learning, 2002.
+    .. [Guyon02] I Guyon, J Weston, S Barnhill and V Vapnik. Gene Selection for Cancer Classification using Support Vector Machines. Machine Learning, 2002.
     
     :Parameters:
        x: 2d array_like object (N,P)
