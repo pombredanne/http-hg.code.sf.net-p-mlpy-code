@@ -95,3 +95,68 @@ def lcs_std(x, y):
     free (p.py)
     
     return length, (px_arr, py_arr)
+
+
+def lcs_real(x, y, eps, delta):
+    """Longest Common Subsequence (LCS) for series
+    composed by real numbers as described in 
+    [Vlachos02]_.
+       
+    :Parameters:
+       x : 1d integer array_like object (N)
+          first sequence
+       y : 1d integer array_like object (M)
+          second sequence
+       eps : float (>=0)
+          matching threshold
+       delta : int (>=0)
+          controls how far in time we can go in order to
+          match a given point from one series to a 
+          point in another series
+
+    :Returns:
+       length : integer
+          length of the LCS of x and y
+       path : tuple of two 1d numpy array (path_x, path_y)
+          path of the LCS
+
+    .. [Vlachos02] M Vlachos et al.. Discovering Similar Multidimensional Trajectories. In Proceedings of the 18th international conference on data engineering, 2002
+    """
+
+    cdef np.ndarray[np.float_t, ndim=1] x_arr
+    cdef np.ndarray[np.float_t, ndim=1] y_arr
+    cdef np.ndarray[np.int_t, ndim=1] px_arr
+    cdef np.ndarray[np.int_t, ndim=1] py_arr
+    cdef char **b
+    cdef int i
+    cdef Path p
+    cdef int length
+
+    x_arr = np.ascontiguousarray(x, dtype=np.float)
+    y_arr = np.ascontiguousarray(y, dtype=np.float)
+
+    b = <char **> malloc ((x_arr.shape[0]+1) * sizeof(char *))
+    for i in range(x_arr.shape[0]+1):
+        b[i] = <char *> malloc ((y_arr.shape[0]+1) * sizeof(char))    
+
+    length = real(<double *> x_arr.data, <double *> y_arr.data, b,
+                  <int> x_arr.shape[0], <int> y_arr.shape[0],
+                   <double> eps, <int> delta)
+
+    trace(b, <int> x_arr.shape[0], <int> y_arr.shape[0], &p)
+    
+    for i in range(x_arr.shape[0]+1):
+        free (b[i])
+    free(b)
+
+    px_arr = np.empty(p.k, dtype=np.int)
+    py_arr = np.empty(p.k, dtype=np.int)
+    
+    for i in range(p.k):
+         px_arr[i] = p.px[i]
+         py_arr[i] = p.py[i]
+
+    free (p.px)
+    free (p.py)
+    
+    return length, (px_arr, py_arr)

@@ -21,6 +21,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include "clcs.h"
 
 #define MIN(a, b) ((a) <= (b) ? (a) : (b))
@@ -45,6 +46,51 @@ int std(long *x, long *y, char **b, int n, int m)
     for (j=1; j<=m; j++) 
       {
 	if (x[i-1] == y[j-1])
+	  {
+	    c[i][j] = c[i-1][j-1] + 1;
+	    b[i][j] = 0; // NW
+	  }
+	else if (c[i-1][j] >= c[i][j-1])
+	  {
+	    c[i][j] = c[i-1][j];
+	    b[i][j] = 1; // N
+	  }
+	else 
+	  {
+	    c[i][j] = c[i][j-1];
+	    b[i][j] = 2; // W
+	  }
+      }
+ 
+  ret = c[n][m];
+
+  for (i=0; i<=n; i++)
+    free (c[i]);
+  free(c);
+  
+  return ret;
+}
+
+
+int real(double *x, double *y, char **b, int n, int m, double eps, int delta)
+{
+  int i, j;
+  int **c;
+  int ret;
+ 
+  c = (int **) malloc ((n+1) * sizeof(int *));
+  for (i=0; i<=n; i++)
+    {
+      c[i] = (int *) malloc ((m+1) * sizeof(int));
+      for (j=0; j<=m; j++)
+	c[i][j] = 0;
+    }
+
+  for (i=1; i<=n; i++)
+    for (j=1; j<=m; j++) 
+      {
+	if ((fabs(x[i-1] - y[j-1]) < eps) &&
+	    (fabs((i-1) - (j-1)) <= delta))
 	  {
 	    c[i][j] = c[i-1][j-1] + 1;
 	    b[i][j] = 0; // NW
