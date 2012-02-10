@@ -23,10 +23,11 @@ from cdtw cimport *
 np.import_array()
 
 
-def dtw_std(x, y, dist_only=True):
+def dtw_std(x, y, dist_only=True, squared=False):
     """Standard DTW as described in [Muller07]_,
-    using the Manhattan distance (absolute value 
-    of the difference) as local cost measure.
+    using the Euclidean distance (absolute value 
+    of the difference) or squared Euclidean distance
+    (as in [Keogh01]_) as local cost measure.
 
     :Parameters:
        x : 1d array_like object (N)
@@ -35,6 +36,8 @@ def dtw_std(x, y, dist_only=True):
           second sequence
        dist_only : bool
           compute only the distance
+       squared : bool
+          squared Euclidean distance
 
     :Returns:
        dist : float
@@ -46,6 +49,7 @@ def dtw_std(x, y, dist_only=True):
           warp path
     
     .. [Muller07] M Muller. Information Retrieval for Music and Motion. Springer, 2007.
+    .. [Keogh01] E J Keogh, M J Pazzani. Derivative Dynamic Time Warping. In First SIAM International Conference on Data Mining, 2001.
     """
 
     cdef np.ndarray[np.float_t, ndim=1] x_arr
@@ -56,14 +60,18 @@ def dtw_std(x, y, dist_only=True):
     cdef Path p
     cdef double dist
     cdef int i
-    
+    cdef int sq
+
     x_arr = np.ascontiguousarray(x, dtype=np.float)
     y_arr = np.ascontiguousarray(y, dtype=np.float)
     cost_arr = np.empty((x_arr.shape[0], y_arr.shape[0]), dtype=np.float)
 
+    if squared: sq = 1
+    else: sq = 0
+
     dist = std(<double *> x_arr.data, <double *> y_arr.data, 
                 <int> x_arr.shape[0], <int> y_arr.shape[0],
-                <double *> cost_arr.data)
+                <double *> cost_arr.data, sq)
     if dist_only:
         return dist
     else:

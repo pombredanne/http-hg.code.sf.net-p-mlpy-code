@@ -51,25 +51,43 @@ paliwal_window(int i, int j, int n, int m, int r)
     return 0;
 }
 
+// euclidean distance
+double e_dist(double x, double y)
+{
+  return fabs(x - y);
+}
+
+// squared euclidean distance
+double se_dist(double x, double y)
+{
+  return pow(x - y, 2);
+}
+
 
 // Returns the (unnormalized) minimum-distance warp path 
 // between time series x and y and the cost matrix C
 double 
-std(double *x, double *y, int n, int m, double *cost)
+std(double *x, double *y, int n, int m, double *cost, int squared)
 {
   int i, j;
+  double (*dist)(double, double);
   
-  cost[0] = fabs(x[0]-y[0]);
+  if (squared == 0)
+    dist = &e_dist;
+  else
+    dist = &se_dist;
+  
+  cost[0] = (*dist)(x[0], y[0]);
   
   for (i=1; i<n; i++)
-    cost[i*m] = fabs(x[i]-y[0]) + cost[(i-1)*m];
+    cost[i*m] = (*dist)(x[i], y[0]) + cost[(i-1)*m];
   
   for (j=1; j<m; j++)
-    cost[j] = fabs(x[0]-y[j]) + cost[(j-1)];
+    cost[j] = (*dist)(x[0], y[j]) + cost[(j-1)];
   
   for (i=1; i<n; i++)
     for (j=1; j<m; j++)
-      cost[i*m+j] = fabs(x[i]-y[j]) + 
+      cost[i*m+j] = (*dist)(x[i], y[j]) + 
 	min3(cost[(i-1)*m+j], cost[(i-1)*m+(j-1)], cost[i*m+(j-1)]);
   
   return cost[n*m-1];
