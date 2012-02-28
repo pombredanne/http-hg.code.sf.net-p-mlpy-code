@@ -207,8 +207,8 @@ class IRelief:
            SigmaError
         """
         
-        xarr = np.asarray(x, dtype=np.float)
-        yarr = np.asarray(y, dtype=np.int)
+        xarr = asarray(x, dtype=float)
+        yarr = asarray(y, dtype=int)
 
         if xarr.ndim != 2:
             raise ValueError("x must be a 2d array_like object")
