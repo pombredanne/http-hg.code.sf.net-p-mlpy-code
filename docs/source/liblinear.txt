@@ -4,18 +4,22 @@ Large Linear Classification from [LIBLINEAR]_
 =============================================
 Solvers:
 	
- * L2-regularized logistic regression (primal) - ``l2r_lr``
- * L2-regularized L2-loss support vector classification (dual) - ``l2r_l2loss_svc_dual``
- * L2-regularized L2-loss support vector classification (primal) - ``l2r_l2loss_svc``
- * L2-regularized L1-loss support vector classification (dual) - ``l2r_l1loss_svc_dual``
- * multi-class support vector classification by Crammer and Singer - ``mcsvm_cs``
- * L1-regularized L2-loss support vector classification - ``l1r_l2loss_svc``
- * L1-regularized logistic regression - ``l1r_lr``
- * L2-regularized logistic regression (dual) - ``l2r_lr_dual``
+ * **l2r_lr**: L2-regularized logistic regression (primal)
+ * **l2r_l2loss_svc_dual**: L2-regularized L2-loss support vector classification (dual)
+ * **l2r_l2loss_svc**: L2-regularized L2-loss support vector classification (primal)
+ * **l2r_l1loss_svc_dual**: L2-regularized L1-loss support vector classification (dual)
+ * **mcsvm_cs**: multi-class support vector classification by Crammer and Singer
+ * **l1r_l2loss_svc**: L1-regularized L2-loss support vector classification
+ * **l1r_lr**: L1-regularized logistic regression
+ * **l2r_lr_dual**: L2-regularized logistic regression (dual)
 
 .. class:: mlpy.LibLinear(solver_type='l2r_lr', C=1, eps=0.01, weight={})
-   	   
-	LibLinear.
+   	   					
+	LibLinear is a simple class for solving large-scale regularized
+        linear classification. It currently supports L2-regularized logistic
+        regression/L2-loss support vector classification/L1-loss support vector
+        classification, and L1-regularized L2-loss support vector classification/
+        logistic regression.
         
         :Parameters:        
             solver_type : string
@@ -34,9 +38,11 @@ Solvers:
 	
 	.. automethod:: learn(x, y)
         .. automethod:: pred(t)
+	.. automethod:: pred_values(t)
+	.. automethod:: pred_probability(t)
 	.. automethod:: w()
 	.. automethod:: bias()
-	.. automethod:: nfeature()	
+	.. automethod:: nfeature()
 	.. automethod:: nclasses()
 	.. automethod:: labels()
 	.. automethod:: load_model(filename)

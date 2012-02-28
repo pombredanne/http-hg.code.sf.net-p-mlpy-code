@@ -90,8 +90,12 @@ cdef class LibLinear:
                    'l2r_lr_dual']
 
     def __cinit__(self, solver_type='l2r_lr', C=1, eps=0.01, weight={}):
-        """LibLinear.
-        
+        """LibLinear is a simple class for solving large-scale regularized
+        linear classification. It currently supports L2-regularized logistic
+        regression/L2-loss support vector classification/L1-loss support vector
+        classification, and L1-regularized L2-loss support vector classification/
+        logistic regression.
+                
         :Parameters:
             solver_type : string
                 solver, can be one of 'l2r_lr', 'l2r_l2loss_svc_dual',
@@ -162,14 +166,14 @@ cdef class LibLinear:
         self.problem.bias = 1
         
     def learn(self, x, y):
-        """Constructs the model.
+        """Learning method.
         
         :Parameters:
       
             x : 2d array_like object
-                training data (samples x features)
+                training data (N, P)
             y : 1d array_like object
-                target values
+                target values (N)
         """
 
         cdef char *ret
@@ -194,7 +198,7 @@ cdef class LibLinear:
                 
         :Parameters:
             t : 1d (one sample) or 2d array_like object
-                test data
+                test data ([M,] P)
             
         :Returns:
             p : int or 1d numpy array
@@ -224,6 +228,114 @@ cdef class LibLinear:
                 free(test_node)
         
         return p
+
+
+    def pred_values(self, t):
+        """Returns D decision values. D is 1 if there are two 
+        classes except multi-class svm by Crammer and Singer 
+        ('mcsvm_cs'), and is the number of classes otherwise.
+        The pred() method returns the class with the highest 
+        decision value.
+                
+        :Parameters:
+            t : 1d (one sample) or 2d array_like object
+                test data ([M,] P)
+            
+        :Returns:
+            decision values : 1d (D) or 2d numpy array (M, D)
+                decision values for each observation.
+        """
+
+        cdef int i, j
+        cdef feature_node *test_node
+        cdef double *dec_values
+
+        tarr = np.ascontiguousarray(t, dtype=np.float64)
+
+        if tarr.ndim > 2:
+            raise ValueError("t must be an 1d or a 2d array_like object")
+        
+        if self.model is NULL:
+            raise ValueError("no model computed")
+
+        if (self.SOLVER_TYPE[self.parameter.solver_type] != \
+                'mcsvm_cs') and self.model.nr_class == 2:
+            n = 1
+        else:
+            n = self.model.nr_class
+
+        dec_values = <double *> malloc (n * sizeof(double))
+
+        if tarr.ndim == 1:
+            dec_values_arr = np.empty(n, dtype=np.float)
+            test_node = array1d_to_node(tarr)
+            p = predict_values(self.model, test_node, dec_values)
+            free(test_node)
+            for j in range(n):
+                dec_values_arr[j] = dec_values[j]
+        else:
+            dec_values_arr = np.empty((tarr.shape[0], n), dtype=np.float)
+            for i in range(tarr.shape[0]):
+                test_node = array1d_to_node(tarr[i])
+                p = predict_values(self.model, test_node, dec_values)
+                free(test_node)
+                for j in range(n):
+                    dec_values_arr[i, j] = dec_values[j]
+        
+        free(dec_values)
+
+        return dec_values_arr
+
+
+    def pred_probability(self, t):
+        """Returns C (number of classes) probability estimates. 
+        The simple probability model of logistic regression
+        is used.
+
+        :Parameters:
+            t : 1d (one sample) or 2d array_like object
+                test data ([M,] P)
+            
+        :Returns:
+            probability estimates : 1d (C) or 2d numpy array (M, C)
+                probability estimates for each observation.
+        """
+
+        cdef int i, j
+        cdef feature_node *test_node
+        cdef double *prob_estimates
+
+        tarr = np.ascontiguousarray(t, dtype=np.float64)
+
+        if tarr.ndim > 2:
+            raise ValueError("t must be an 1d or a 2d array_like object")
+        
+        if self.model is NULL:
+            raise ValueError("no model computed")
+
+        prob_estimates = <double *> malloc (self.model.nr_class * sizeof(double))
+
+        if tarr.ndim == 1:
+            prob_estimates_arr = np.empty(self.model.nr_class, dtype=np.float)
+            test_node = array1d_to_node(tarr)
+            p = predict_probability(self.model, test_node, prob_estimates)
+            free(test_node)
+            for j in range(self.model.nr_class):
+                prob_estimates_arr[j] = prob_estimates[j]
+        else:
+            prob_estimates_arr = np.empty((tarr.shape[0], self.model.nr_class), 
+                                      dtype=np.float)
+            for i in range(tarr.shape[0]):
+                test_node = array1d_to_node(tarr[i])
+                p = predict_probability(self.model, test_node, prob_estimates)
+                free(test_node)
+                for j in range(self.model.nr_class):
+                    prob_estimates_arr[i, j] = prob_estimates[j]
+        
+        free(prob_estimates)
+
+        return prob_estimates_arr
+
 
     def nfeature(self):
         """Returns the number of attributes.
@@ -285,8 +397,8 @@ cdef class LibLinear:
 
     def w(self):
         """Returns the coefficients.
-        For 'mcsvm_cs' solver and for multiclass classification this
-        method returns a 2d numpy array where w[i] contains the
+        For 'mcsvm_cs' solver and for multiclass classification 
+        returns a 2d numpy array where w[i] contains the
         coefficients of label i. For binary classification 
         an 1d numpy array is returned.
         """
@@ -300,8 +412,8 @@ cdef class LibLinear:
        
     def bias(self):
         """Returns the bias term(s).
-        For 'mcsvm_cs' solver and for multiclass classification this
-        method returns a 1d numpy array where b[i] contains the
+        For 'mcsvm_cs' solver and for multiclass classification
+        returns a 1d numpy array where b[i] contains the
         bias of label i (.labels()[i]). For binary classification 
         a float is returned.
         """

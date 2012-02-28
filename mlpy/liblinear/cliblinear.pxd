@@ -31,9 +31,10 @@ cdef extern from "liblinear/linear.h":
     void set_print_string_function(void (*print_func)(char *))
         
     model* train(problem *prob, parameter *param)
-
     int predict(model *model_, feature_node *x)
- 
+    int predict_values(model *model_, feature_node *x, double* dec_values)
+    int predict_probability(model *model_, feature_node *x, double* prob_estimates)
+
     int save_model(char *model_file_name, model *model_)
     model *load_model(char *model_file_name)
 
