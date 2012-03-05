@@ -266,8 +266,8 @@ def cwt(x, dt, scales, wf='dog', p=2):
     else:
         raise ValueError('wavelet function is not available')
     
-    X_ARR = empty_like(wft)
-   
+    X_ARR = empty((wft.shape[0], wft.shape[1]), dtype=complex128)
+        
     x_arr_ft = fft.fft(x_arr)
 
     for i in range(X_ARR.shape[0]):
