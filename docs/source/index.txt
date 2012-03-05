@@ -10,6 +10,7 @@ Welcome to mlpy's documentation!
 
 :Release: |version|
 :Date: |today|
+:Homepage: http://mlpy.sourceforge.net
 
 Machine Learning PYthon (mlpy) is a high-performance Python
 library for predictive modeling.

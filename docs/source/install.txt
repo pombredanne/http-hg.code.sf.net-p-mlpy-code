@@ -1,6 +1,11 @@
 Install
 =======
 
+Download
+--------
+
+Download latest version for your OS from  http://sourceforge.net/projects/mlpy/files/
+
 Installing on \*nix from source
 -------------------------------
 
