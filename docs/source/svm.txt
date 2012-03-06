@@ -51,6 +51,7 @@ Support Vector Machines from [LIBSVM]_
 	.. automethod:: learn(x, y)
         .. automethod:: pred(t)
 	.. automethod:: pred_probability(t)
+	.. automethod:: pred_values(t)
 	.. automethod:: labels()
 	.. automethod:: nclasses()
 	.. automethod:: nsv()
