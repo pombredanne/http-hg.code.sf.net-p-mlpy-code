@@ -283,7 +283,6 @@ cdef class LibLinear:
                     dec_values_arr[i, j] = dec_values[j]
         
         free(dec_values)
-
         return dec_values_arr
 
 
@@ -313,7 +312,8 @@ cdef class LibLinear:
         if self.model is NULL:
             raise ValueError("no model computed")
 
-        prob_estimates = <double *> malloc (self.model.nr_class * sizeof(double))
+        prob_estimates = <double *> malloc (self.model.nr_class *
+                                            sizeof(double))
 
         if tarr.ndim == 1:
             prob_estimates_arr = np.empty(self.model.nr_class, dtype=np.float)
@@ -333,7 +333,6 @@ cdef class LibLinear:
                     prob_estimates_arr[i, j] = prob_estimates[j]
         
         free(prob_estimates)
-
         return prob_estimates_arr
 
 

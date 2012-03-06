@@ -203,13 +203,17 @@ cdef class LibSvm:
                 
     def learn(self, x, y):
         """Constructs the model.
+        For classification, y is an integer indicating the class label
+        (multi-class is supported). For regression, y is the target
+        value which can be any real number. For one-class SVM, it's not used
+        so can be any number.
         
         :Parameters:
         
             x : 2d array_like object
-                training data (samples x features)
+                training data (N, P)
             y : 1d array_like object
-                target values
+                target values (N)
         """
         
         cdef char *ret
@@ -233,12 +237,10 @@ cdef class LibSvm:
         """Does classification or regression on test vector(s) t.
                 
         :Parameters:
-        
             t : 1d (one sample) or 2d array_like object
-                test data
+                test data ([M,] P)
             
         :Returns:
-        
             p : for a classification model, the predicted class(es) for t is
                 returned. For a regression model, the function value(s) of t
                 calculated using the model is returned. For an one-class
@@ -269,29 +271,84 @@ cdef class LibSvm:
 
         return p
 
-    def pred_probability(self, t):
-        """Does classification or regression on a test vector(s) t
-        given a model with probability information.
-
-        For a classification model with probability information, this
-        method computes 'number of classes' probability estimates. The
-        class with the highest probability is returned. For regression
-        / one-class SVM, the returned value is the same as that of
-        pred().
+    def pred_values(self, t):
+        """Returns D decision values. 
+        For a classification model with C classes, this method
+        returns D=C*(C-1)/2 decision values for each test sample. 
+        The order is label[0] vs. label[1], ..., label[0] vs. 
+        label[C-1], label[1] vs. label[2], ..., label[C-2] vs. 
+        label[C-1], where label can be obtained from the method labels().
         
+        For a one-class model, this method returns D=1 decision value 
+        for each test sample.
+        
+        For a regression model, this method returns the predicted
+        value as in pred()
+                
         :Parameters:
-        
             t : 1d (one sample) or 2d array_like object
-                test data
+                test data ([M,] P)
             
         :Returns:
-         
-            p : for a classification model, the predicted class(es) for t is
-                returned. For a regression model, the function value(s) of t
-                calculated using the model is returned. For an one-class
-                model, +1 or -1 is returned.
+            decision values : 1d (D) or 2d numpy array (M,D)
+                decision values for each observation.
+        """
+
+        cdef int i, j
+        cdef svm_node *test_node
+        cdef double *dec_values
+
+        tarr = np.ascontiguousarray(t, dtype=np.float64)
+
+        if tarr.ndim > 2:
+            raise ValueError("t must be an 1d or a 2d array_like object")
+        
+        if self.model is NULL:
+            raise ValueError("no model computed")
+
+        if self.SVM_TYPE[self.parameter.svm_type] == 'c_svc' or \
+                self.SVM_TYPE[self.parameter.svm_type] == 'nu_svc':
+            n = self.model.nr_class*(self.model.nr_class - 1) / 2 
+        else:
+            n = 1
+
+        dec_values = <double *> malloc (n * sizeof(double))
+        
+        if tarr.ndim == 1:
+            dec_values_arr = np.empty(n, dtype=np.float)
+            test_node = array1d_to_node(tarr)
+            p = svm_predict_values(self.model, test_node, dec_values)
+            free(test_node)
+            for j in range(n):
+                dec_values_arr[j] = dec_values[j]
+        else:
+            dec_values_arr = np.empty((tarr.shape[0], n), dtype=np.float)
+            for i in range(tarr.shape[0]):
+                test_node = array1d_to_node(tarr[i])
+                p = svm_predict_values(self.model, test_node, dec_values)
+                free(test_node)
+                for j in range(n):
+                    dec_values_arr[i, j] = dec_values[j]
+        
+        free(dec_values)
+        return dec_values_arr
+
+    def pred_probability(self, t):
+        """Returns C (number of classes) probability estimates.
+        For a 'c_svc' and 'nu_svc' classification models with probability 
+        information, this method computes 'number of classes' probability 
+        estimates.
+
+        :Parameters:
+            t : 1d (one sample) or 2d array_like object
+                test data ([M,] P)
+            
+        :Returns:
+            probability estimates : 1d (C) or 2d numpy array (M,C)
+                probability estimates for each observation.
         """
         
+        cdef int i, j
         cdef svm_node *test_node
         cdef double *prob_estimates
 
@@ -303,6 +360,11 @@ cdef class LibSvm:
         if self.model is NULL:
             raise ValueError("no model computed")
         
+        if self.SVM_TYPE[self.parameter.svm_type] != 'c_svc' and \
+                self.SVM_TYPE[self.parameter.svm_type] != 'nu_svc':
+            raise ValueError("probability estimates are available only for"
+                             "'c_svc', 'nu_svc' svm types")
+        
         ret = svm_check_probability_model(self.model)
         if ret == 0:
             raise ValueError("model does not contain required information"
@@ -310,24 +372,31 @@ cdef class LibSvm:
                              "=True")
 
         prob_estimates = <double*> malloc (self.model.nr_class * 
-            sizeof(double))
+                                           sizeof(double))
         
         if tarr.ndim == 1:
+            prob_estimates_arr = np.empty(self.model.nr_class, dtype=np.float)
             test_node = array1d_to_node(tarr)
             p = svm_predict_probability(self.model, test_node,
                 prob_estimates)
             free(test_node)
+            for j in range(self.model.nr_class):
+                prob_estimates_arr[j] = prob_estimates[j]
         else:
-            p = np.empty(tarr.shape[0], dtype=np.float64)
+            prob_estimates_arr = np.empty((tarr.shape[0], self.model.nr_class), 
+                                          dtype=np.float)
             for i in range(tarr.shape[0]):
                 test_node = array1d_to_node(tarr[i])
-                p[i] = svm_predict_probability(self.model, test_node,
-                    prob_estimates)
+                p = svm_predict_probability(self.model, test_node,
+                                            prob_estimates)
                 free(test_node)
+                for j in range(self.model.nr_class):
+                    prob_estimates_arr[i, j] = prob_estimates[j]
 
         free(prob_estimates)
-        return p
+        return prob_estimates_arr
    
+
     def labels(self):
         """For a classification model, this method outputs the name of
         labels. For regression and one-class models, this method

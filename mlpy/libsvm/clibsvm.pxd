@@ -56,6 +56,8 @@ cdef extern from "libsvm/svm.h":
     double svm_predict(svm_model *model, svm_node *x)
     double svm_predict_probability(svm_model *model, 
         svm_node *x, double* prob_estimates)
+    double svm_predict_values(svm_model *model, 
+        svm_node *x, double* dec_values)
     
     void svm_free_and_destroy_model(svm_model **model_ptr_ptr)
     void svm_destroy_param(svm_parameter* param)
