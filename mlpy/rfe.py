@@ -14,12 +14,11 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = ['rfe_svm', 'rfe_kfda']
+__all__ = ['rfe_kfda', 'rfe_w2']
 
 import numpy as np
 from kernel_class import *
 from da import KFDAC
-from liblinear import LibLinear
 
 
 # used in rfe_kfda
@@ -128,11 +127,10 @@ def rfe_kfda(x, y, p, lmb, kernel):
     return np.concatenate(ranking)
 
 
-def rfe_w2(x, y, p, classif):
+def rfe_w2(x, y, p, classifier):
     """RFE algorithm, where the ranking criteria is w^2,
-    described in [Guyon02]_. The algorithm works with only two
-    classes. `classifier` must be an object with learn() and
-    w() methods.
+    described in [Guyon02]_. `classifier` must be an linear classifier 
+    with learn() and w() methods.
         
     .. [Guyon02] I Guyon, J Weston, S Barnhill and V Vapnik. Gene Selection for Cancer Classification using Support Vector Machines. Machine Learning, 2002.
     
@@ -144,7 +142,7 @@ def rfe_w2(x, y, p, classif):
        p : float [0.0, 1.0]
           percentage  of features (upper rounded) to remove
           at each iteration (p=0 one variable)
-       classif : object with learn() and w() methods
+       classifier : object with learn() and w() methods
           object
 
     :Returns:
@@ -156,6 +154,9 @@ def rfe_w2(x, y, p, classif):
     
     if (p < 0.0) or (p > 1.0):
         raise ValueError("parameter p must be in [0.0, 1.0]")
+
+    if not (hasattr(classifier, 'learn') and hasattr(classifier, 'w')):
+        raise ValueError("parameter classifier must have learn() and w() methods")
 
     xarr = np.asarray(x, dtype=np.float)
     yarr = np.asarray(y, dtype=np.int)
@@ -179,8 +180,8 @@ def rfe_w2(x, y, p, classif):
     while True:
         nelim = np.max((int(np.ceil(idxglobal.shape[0] * p)), 1))
         xi = xarr[:, idxglobal]
-        classif.learn(xi, yarr)
-        w = classif.w()
+        classifier.learn(xi, yarr)
+        w = classifier.w()
         idxsorted = np.argsort(w**2)
         # indexes to remove
         idxelim = idxglobal[idxsorted[:nelim]][::-1]
@@ -194,49 +195,3 @@ def rfe_w2(x, y, p, classif):
             break
     
     return np.concatenate(ranking)
-
-
-def rfe_svm(x, y, p, solver_type='l2r_l2loss_svc_dual', C=1, eps=0.01, weight={}):
-    """Linear SVM-RFE algorithm, where the ranking criteria is w^2,
-    described in [Guyon02]_. The algorithm works with only two
-    classes.        
-    .. [Guyon02] I Guyon, J Weston, S Barnhill and V Vapnik. Gene Selection for Cancer Classification using Support Vector Machines. Machine Learning, 2002.
-    
-    :Parameters:
-       x: 2d array_like object (N,P)
-          training data
-       y : 1d array_like object integer (N)
-          class labels (only two classes)
-       p : float [0.0, 1.0]
-          percentage  of features (upper rounded) to remove
-          at each iteration (p=0 one variable)
-       solver_type : string
-          solver, can be one of 'l2r_l2loss_svc_dual',
-          'l2r_l2loss_svc', 'l2r_l1loss_svc_dual', 
-          'l1r_l2loss_svc'.
-       C : float
-          cost of constraints violation
-       eps : float
-          stopping criterion
-       weight : dict 
-          changes the penalty for some classes (if the weight for a
-          class is not changed, it is set to 1). For example, to
-          change penalty for classes 1 and 2 to 0.5 and 0.8
-          respectively set weight={1:0.5, 2:0.8}
-          
-
-    :Returns:
-       ranking : 1d numpy array int
-          feature ranking. ranking[i] contains the feature index ranked
-          in i-th position.
-    """
-    
-    if solver_type not in ['l2r_l2loss_svc_dual', 'l2r_l2loss_svc', 
-                           'l2r_l1loss_svc_dual', 'l1r_l2loss_svc']:
-        raise ValueError("invalid solver_type")
-    
-    svc = LibLinear(solver_type, C, eps, weight)
-    return rfe_w2(x, y, p, svc)
-    
-    
-    
