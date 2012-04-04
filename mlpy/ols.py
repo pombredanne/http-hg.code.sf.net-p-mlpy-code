@@ -107,7 +107,7 @@ class OLS:
            p : integer or 1d numpy darray
               predicted response
         """
-        if not self._beta or not self._beta0:
+        if self._beta is None or self._beta0 is None:
             raise ValueError('no mode computed; run learn() first')
 
         tarr = np.asarray(t, dtype=np.float)
