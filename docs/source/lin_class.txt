@@ -205,8 +205,6 @@ See :doc:`liblinear`
 
 Diagonal Linear Discriminant Analysis (DLDA)
 --------------------------------------------
-See [Hastie09]_, page 651.
-
 
 .. autoclass:: DLDA
    :members:

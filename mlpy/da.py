@@ -23,6 +23,9 @@ __all__ = ['LDAC', 'DLDA', 'KFDAC', 'QDA']
 
 class LDAC:
     """Linear Discriminant Analysis Classifier.
+    See [Hastie09]_, page 106.
+
+    .. [Hastie09] T Hastie, R Tibshirani, J Friedman. The Elements of Statistical Learning. Second Edition.
     """
     
     def __init__(self):
@@ -428,6 +431,7 @@ class KFDAC:
         self._alpha = None
         self._b = None
         self._x = None
+        self._model = False
       
     def learn(self, K, y):
         """Learning method.
@@ -484,13 +488,44 @@ class KFDAC:
 
         self._alpha = np.linalg.solve(N, d)
         self._b = - np.dot(self._alpha, (n1 * m1 + n2 * m2) / float(n))
-
+        self._model = True
+        
     def labels(self):
         """Outputs the name of labels.
         """
         
         return self._labels
         
+    def pred_values(self, Kt):
+        """Returns the decision value g(Kt) for eache test sample.
+        The pred() method chooses self.labels()[0] if g(Kt) > 0, 
+        self.labels()[1] otherwise.
+
+        :Parameters :	
+           t : 1d (one sample) or 2d array_like object
+              test data ([M,] P)
+        :Returns :	
+           decision values : 1d (1) or 2d numpy array (M, 1)
+              decision values for each observation.
+        """
+
+        if not self._model:
+            raise ValueError("no model computed.")
+
+        Ktarr = np.asarray(Kt, dtype=np.float)
+        if self._kernel is not None:
+            Ktarr = self._kernel.kernel(Ktarr, self._x)
+
+        try:
+            values = np.dot(self._alpha, Ktarr.T) + self._b
+        except ValueError:
+            raise ValueError("Kt, alpha: shape mismatch")
+
+        if Ktarr.ndim == 1:
+            return np.array([values])
+        else:
+            return values.reshape(-1, 1)
+
     def pred(self, Kt):
         """Compute the predicted response.
       
@@ -504,22 +539,16 @@ class KFDAC:
                 the predicted class(es)
         """
 
-        
-        if self._alpha is None:
-            raise ValueError("no model computed; run learn()")
+        values = self.pred_values(Kt)
 
-        Ktarr = np.asarray(Kt, dtype=np.float)
-        if self._kernel is not None:
-            Ktarr = self._kernel.kernel(Ktarr, self._x)
+        if values.ndim == 1:
+            values = values[0]
+        else:
+            values = np.ravel(values)
 
-        try:
-            s = np.sign(np.dot(self._alpha, Ktarr.T) + self._b)
-        except ValueError:
-            raise ValueError("Kt, alpha: shape mismatch")
-
-        return np.where(s==1, self._labels[0], self._labels[1]) \
+        return np.where(values > 0, self._labels[0], self._labels[1]) \
             .astype(np.int)
-
+            
     def alpha(self):
         """Return alpha.
         """
