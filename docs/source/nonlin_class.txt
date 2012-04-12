@@ -3,7 +3,7 @@
 Non Linear Methods for Classification
 =====================================
 
-Quadratic Discriminant Analisys (QDA)
+Quadratic Discriminant Analysis (QDA)
 -------------------------------------
 
 .. autoclass:: QDA
