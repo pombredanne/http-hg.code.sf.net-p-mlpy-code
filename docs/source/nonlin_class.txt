@@ -3,6 +3,51 @@
 Non Linear Methods for Classification
 =====================================
 
+
+
+Quadratic Discriminant Analisys (QDA)
+-------------------------------------
+
+.. autoclass:: QDA
+   :members:
+
+Example:
+
+>>> import numpy as np
+>>> import matplotlib.pyplot as plt
+>>> import mlpy
+>>> np.random.seed(0)
+>>> mean1, cov1, n1 = [1, 5], [[1,1],[1,2]], 300  # 200 samples of class 0
+>>> x1 = np.random.multivariate_normal(mean1, cov1, n1)
+>>> y1 = np.ones(n1, dtype=np.int)
+>>> mean2, cov2, n2 = [2.5, 2.5], [[1,0],[0,1]], 200 # 300 samples of class 1
+>>> x2 = np.random.multivariate_normal(mean2, cov2, n2)
+>>> y2 = 2 * np.ones(n2, dtype=np.int)
+>>> x = np.concatenate((x1, x2), axis=0) # concatenate the samples
+>>> y = np.concatenate((y1, y2))
+>>> qda = mlpy.QDA()
+>>> qda.learn(x, y)
+>>> xmin, xmax = x[:,0].min()-1, x[:,0].max()+1
+>>> ymin, ymax = x[:,1].min()-1, x[:,1].max()+1
+>>> xx, yy = np.meshgrid(np.arange(xmin, xmax, 0.1), np.arange(ymin, ymax, 0.1))
+>>> xnew = np.c_[xx.ravel(), yy.ravel()]
+>>> ynew = qda.pred(xnew).reshape(xx.shape)
+>>> fig = plt.figure(1)
+>>> values = qda.pred_values(xnew)
+>>> valuesdiff = values[:, 1] - values[:, 0]
+>>> valuesdiff = valuesdiff.reshape(xx.shape)
+>>> cmap = plt.set_cmap(plt.cm.RdBu)
+>>> plot = plt.imshow(valuesdiff, interpolation='nearest',
+...                   extent=(xmin, xmax, ymin, ymax), vmin=-26, vmax=26,
+...                   aspect='auto', origin='lower', cmap=plt.cm.RdBu)
+>>> contours = plt.contour(xx, yy, valuesdiff, levels=[0], linewidths=2,
+...                        linetypes='--')
+>>> scatter1 = plt.scatter(x[y==1,0], x[y==1,1], s=40, c='w', marker='o')
+>>> scatter2 = plt.scatter(x[y==2,0], x[y==2,1], s=40, c='w', marker='^')
+>>> plt.show()
+
+.. image:: images/qda.png
+
 Parzen-based classifier
 -----------------------
 

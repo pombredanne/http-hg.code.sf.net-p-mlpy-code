@@ -1,5 +1,5 @@
 ## This code is written by Davide Albanese, <albanese@fbk.eu>.
-## (C) 2011 mlpy Developers.
+## (C) 2012 mlpy Developers.
 
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ import numpy as np
 from kernel_class import *
 
 
-__all__ = ['LDAC', 'DLDA', 'KFDAC']
+__all__ = ['LDAC', 'DLDA', 'KFDAC', 'QDA']
 
 
 class LDAC:
@@ -296,7 +296,6 @@ class DLDA:
 
 class KFDAC:
     """Kernel Fisher Discriminant Analysis Classifier (binary classifier).
-
     The bias term (b) is computed as in [Gavin03]_.
 
     .. [Gavin03] Gavin C. et al. Efficient Cross-Validation of Kernel Fisher Discriminant Classifers. ESANN'2003 proceedings - European Symposium on Artificial Neural Networks, 2003.
@@ -426,3 +425,131 @@ class KFDAC:
         """Return b.
         """
         return self._b
+
+
+class QDA:
+    """Quadratic Discriminant Analysis Classifier.
+    See [Hastie09]_, pages 110 and 113.
+
+    .. [Hastie09] T Hastie, R Tibshirani, J Friedman. The Elements of Statistical Learning. Second Edition.
+    """
+    
+    def __init__(self):
+        """Initialization.
+        """
+
+        self._prior = None
+        self._mean = None
+        self._evecs = None
+        self._evals = None
+        self._labels = None
+        self._model = False
+        
+    def learn(self, x, y):
+        """Learning method.
+
+        :Parameters:
+           x : 2d array_like object
+              training data (N, P)
+           y : 1d array_like object integer
+              target values (N)
+        """
+
+        xarr = np.asarray(x, dtype=np.float)
+        yarr = np.asarray(y, dtype=np.int)
+
+        if xarr.ndim != 2:
+            raise ValueError("x must be a 2d array_like object")
+        
+        if yarr.ndim != 1:
+            raise ValueError("y must be an 1d array_like object")
+
+        self._labels = np.unique(yarr)
+        k = self._labels.shape[0]
+
+        if k < 2:
+            raise ValueError("number of classes must be >= 2")  
+
+        n = np.min(xarr.shape)
+
+        self._prior = np.empty(k, dtype=np.float)
+        self._mean = np.empty((k, xarr.shape[1]), dtype=np.float)
+        self._evecs = []
+        self._evals = []
+
+        for i in range(k):
+            r = (yarr == self._labels[i])
+            self._prior[i] = np.sum(r) / float(xarr.shape[0])
+            self._mean[i] = np.mean(xarr[r], axis=0)
+            xs = (xarr[r] - np.mean(xarr[r], axis=0)) / \
+                np.sqrt(xarr[r].shape[0] - 1)
+            _, s, v = np.linalg.svd(xs, full_matrices=False)
+            self._evecs.append(v.T)
+            self._evals.append(s**2)
+        
+        self._model = True
+
+    def _pred_values_one(self, t):
+        values = np.empty(self._labels.shape[0], dtype=np.float)
+        
+        for i in range(self._labels.shape[0]):
+            tm = t - self._mean[i]
+            
+            tmp1 = np.dot(tm, self._evecs[i])
+            tmp2 = np.dot(tmp1, np.diag(1.0 / self._evals[i]))
+            tmp3 = np.dot(tmp2, tmp1.T)
+
+            values[i] = - 0.5 * np.sum(np.log(self._evals[i])) - \
+                0.5 * tmp3 + np.log(self._prior[i])
+        
+        return values
+                             
+    def pred_values(self, t):
+        """Returns C (number of classes) decision values.
+        
+        :Parameters :	
+           t : 1d (one sample) or 2d array_like object
+              test data ([M,] P)
+        :Returns :	
+           decision values : 1d (C) or 2d numpy array (M, C)
+              decision values for each observation.
+        """
+        
+        if not self._model:
+            raise ValueError("no model computed.")
+
+        tarr = np.asarray(t, dtype=np.float)
+    
+        if tarr.ndim == 1:
+            return self._pred_values_one(tarr)
+        else:
+            values = np.empty((tarr.shape[0], self._labels.shape[0]), 
+                              dtype=np.float)
+            for i in range(tarr.shape[0]):
+                values[i] = self._pred_values_one(tarr[i])
+            return values
+    
+    def pred(self, t):
+        """Does classification on test vector(s) `t`.
+        Returns the class with the highest decision value.
+      
+        :Parameters:
+            t : 1d (one sample) or 2d array_like object
+                test sample(s) ([M,] P)
+            
+        :Returns:        
+            p : integer or 1d numpy array
+                predicted class(es)
+        """
+
+        values = self.pred_values(t)
+        if values.ndim == 1:
+            return self._labels[np.argmax(values)]
+        else:
+            return self._labels[np.argmax(values, axis=1)]
+
+    def labels(self):
+        """Outputs the name of labels.
+        """
+        
+        return self._labels
