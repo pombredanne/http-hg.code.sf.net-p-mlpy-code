@@ -3,8 +3,6 @@
 Non Linear Methods for Classification
 =====================================
 
-
-
 Quadratic Discriminant Analisys (QDA)
 -------------------------------------
 
@@ -33,17 +31,15 @@ Example:
 >>> xnew = np.c_[xx.ravel(), yy.ravel()]
 >>> ynew = qda.pred(xnew).reshape(xx.shape)
 >>> fig = plt.figure(1)
->>> values = qda.pred_values(xnew)
->>> valuesdiff = values[:, 1] - values[:, 0]
->>> valuesdiff = valuesdiff.reshape(xx.shape)
+>>> values = qda.pred_values(xnew).reshape(xx.shape)
 >>> cmap = plt.set_cmap(plt.cm.RdBu)
->>> plot = plt.imshow(valuesdiff, interpolation='nearest',
+>>> plot = plt.imshow(values, interpolation='nearest',
 ...                   extent=(xmin, xmax, ymin, ymax), vmin=-26, vmax=26,
 ...                   aspect='auto', origin='lower', cmap=plt.cm.RdBu)
->>> contours = plt.contour(xx, yy, valuesdiff, levels=[0], linewidths=2,
+>>> contours = plt.contour(xx, yy, values, levels=[0], linewidths=2,
 ...                        linetypes='--')
->>> scatter1 = plt.scatter(x[y==1,0], x[y==1,1], s=40, c='w', marker='o')
->>> scatter2 = plt.scatter(x[y==2,0], x[y==2,1], s=40, c='w', marker='^')
+>>> scatter1 = plt.scatter(x[y==1, 0], x[y==1, 1], s=40, c='w', marker='o')
+>>> scatter2 = plt.scatter(x[y==2, 0], x[y==2, 1], s=40, c='w', marker='^')
 >>> plt.show()
 
 .. image:: images/qda.png

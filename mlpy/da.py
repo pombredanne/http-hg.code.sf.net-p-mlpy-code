@@ -32,6 +32,7 @@ class LDAC:
         self._labels = None
         self._w = None
         self._bias = None
+        self._model = False
       
     def learn(self, x, y):
         """Learning method.
@@ -79,6 +80,8 @@ class LDAC:
             self._bias[i] = - 0.5 * np.dot(mu[i], self._w[i]) + \
                 np.log(p[i])
 
+        self._model = True
+
     def labels(self):
         """Outputs the name of labels.
         """
@@ -89,15 +92,15 @@ class LDAC:
         """Returns the coefficients.
         For multiclass classification this method returns a 2d 
         numpy array where w[i] contains the coefficients of label i.
-        For binary classification an 1d numpy array (w_1 - w_0) 
+        For binary classification an 1d numpy array (w = w_0 - w_1)
         is returned.
         """
         
-        if self._w is None:
+        if not self._model:
             raise ValueError("no model computed.")
 
         if self._labels.shape[0] == 2:
-            return self._w[1] - self._w[0]
+            return self._w[0] - self._w[1]
         else:
             return self._w
 
@@ -105,46 +108,91 @@ class LDAC:
         """Returns the bias.
         For multiclass classification this method returns a 1d 
         numpy array where b[i] contains the coefficients of label i. 
-        For binary classification an float (b_1 - b_0) is returned.
+        For binary classification a float (b = b_0 - b_1) is returned.
         """
         
-        if self._w is None:
+        if not self._model:
             raise ValueError("no model computed.")
         
         if self._labels.shape[0] == 2:
-            return self._bias[1] - self._bias[0]
+            return self._bias[0] - self._bias[1]
         else:
             return self._bias
 
-    def pred(self, t):
-        """Does classification on test vector(s) `t`.
-      
-        :Parameters:
-            t : 1d (one sample) or 2d array_like object
-                test data ([M,] P)
-            
-        :Returns:        
-            p : integer or 1d numpy array
-                predicted class(es)
-        """
+    def _pred_values_one(self, t):
+        values = np.empty(self._labels.shape[0], dtype=np.float)
         
-        if self._w is None:
+        for i in range(self._labels.shape[0]):
+            values[i] = np.dot(t, self._w[i]) + self._bias[i]
+            
+        if self._labels.shape[0] == 2:
+            return np.array([values[0] - values[1]])
+        else:
+            return values
+
+    def _pred_one(self, t):
+        values = self._pred_values_one(t)
+        
+        if self._labels.shape[0] == 2:
+            if values > 0:
+                return self._labels[0]
+            else:
+                return self._labels[1]
+        else:
+            return self._labels[np.argmax(values)]
+
+    def pred_values(self, t):
+        """Returns D decision values for eache test sample. 
+        D is 1 if there are two classes (g(t) = g_1(t) - g_2(t)) 
+        and it is the number of classes (g_1(t), g_2(t), ..., g_C(t)) 
+        otherwise.
+        
+        :Parameters :	
+           t : 1d (one sample) or 2d array_like object
+              test data ([M,] P)
+        :Returns :	
+           decision values : 1d (D) or 2d numpy array (M, D)
+              decision values for each observation.
+        """
+
+        if not self._model:
             raise ValueError("no model computed.")
 
         tarr = np.asarray(t, dtype=np.float)
-
+                
         if tarr.ndim == 1:
-            delta = np.empty(self._labels.shape[0], dtype=np.float)
-            for i in range(self._labels.shape[0]):
-                delta[i] = np.dot(tarr, self._w[i]) + self._bias[i]
-            return self._labels[np.argmax(delta)]
+            return self._pred_values_one(tarr)
         else:
-            delta = np.empty((tarr.shape[0], self._labels.shape[0]),
-                        dtype=np.float)
-            for i in range(self._labels.shape[0]):
-                delta[:, i] = np.dot(tarr, self._w[i]) + self._bias[i]
-            return self._labels[np.argmax(delta, axis=1)]
+            values = []
+            for i in range(tarr.shape[0]):
+                values.append(self._pred_values_one(tarr[i]))
+            return np.array(values)
 
+    def pred(self, t):
+        """Does classification on test vector(s) `t`.
+        Returns the class with the highest decision value.
+        
+        :Parameters:
+            t : 1d (one sample) or 2d array_like object
+               test sample(s) ([M,] P)
+            
+        :Returns:        
+            p : integer or 1d numpy array
+               predicted class(es)
+        """
+                                
+        if not self._model:
+            raise ValueError("no model computed.")
+
+        tarr = np.asarray(t, dtype=np.float)
+                
+        if tarr.ndim == 1:
+            return self._pred_one(tarr)
+        else:
+            pred = []
+            for i in range(tarr.shape[0]):
+                pred.append(self._pred_one(tarr[i]))
+            return np.array(pred)
 
 
 class DLDA:
@@ -493,25 +541,40 @@ class QDA:
         values = np.empty(self._labels.shape[0], dtype=np.float)
         
         for i in range(self._labels.shape[0]):
-            tm = t - self._mean[i]
-            
+            tm = t - self._mean[i]   
             tmp1 = np.dot(tm, self._evecs[i])
             tmp2 = np.dot(tmp1, np.diag(1.0 / self._evals[i]))
             tmp3 = np.dot(tmp2, tmp1.T)
-
             values[i] = - 0.5 * np.sum(np.log(self._evals[i])) - \
                 0.5 * tmp3 + np.log(self._prior[i])
         
-        return values
-                             
+        if self._labels.shape[0] == 2:
+            return np.array([values[0] - values[1]])
+        else:
+            return values
+        
+    def _pred_one(self, t):
+        values = self._pred_values_one(t)
+        
+        if self._labels.shape[0] == 2:
+            if values > 0:
+                return self._labels[0]
+            else:
+                return self._labels[1]
+        else:
+            return self._labels[np.argmax(values)]
+                                
     def pred_values(self, t):
-        """Returns C (number of classes) decision values.
+        """Returns D decision values for eache test sample. 
+        D is 1 if there are two classes (g(t) = g_1(t) - g_2(t)) 
+        and it is the number of classes (g_1(t), g_2(t), ..., g_C(t)) 
+        otherwise.
         
         :Parameters :	
            t : 1d (one sample) or 2d array_like object
               test data ([M,] P)
         :Returns :	
-           decision values : 1d (C) or 2d numpy array (M, C)
+           decision values : 1d (D) or 2d numpy array (M, D)
               decision values for each observation.
         """
         
@@ -519,15 +582,14 @@ class QDA:
             raise ValueError("no model computed.")
 
         tarr = np.asarray(t, dtype=np.float)
-    
+                
         if tarr.ndim == 1:
             return self._pred_values_one(tarr)
         else:
-            values = np.empty((tarr.shape[0], self._labels.shape[0]), 
-                              dtype=np.float)
+            values = []
             for i in range(tarr.shape[0]):
-                values[i] = self._pred_values_one(tarr[i])
-            return values
+                values.append(self._pred_values_one(tarr[i]))
+            return np.array(values)
     
     def pred(self, t):
         """Does classification on test vector(s) `t`.
@@ -541,12 +603,19 @@ class QDA:
             p : integer or 1d numpy array
                 predicted class(es)
         """
+                                
+        if not self._model:
+            raise ValueError("no model computed.")
 
-        values = self.pred_values(t)
-        if values.ndim == 1:
-            return self._labels[np.argmax(values)]
+        tarr = np.asarray(t, dtype=np.float)
+                
+        if tarr.ndim == 1:
+            return self._pred_one(tarr)
         else:
-            return self._labels[np.argmax(values, axis=1)]
+            pred = []
+            for i in range(tarr.shape[0]):
+                pred.append(self._pred_one(tarr[i]))
+            return np.array(pred)
 
     def labels(self):
         """Outputs the name of labels.
