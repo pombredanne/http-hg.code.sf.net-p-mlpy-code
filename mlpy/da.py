@@ -199,6 +199,10 @@ class DLDA:
     """Diagonal Linear Discriminant Analysis classifier.
     The algorithm uses the procedure called Nearest Shrunken
     Centroids (NSC).
+
+    See [Hastie09]_, pages 651-654.
+
+    .. [Hastie09] T Hastie, R Tibshirani, J Friedman. The Elements of Statistical Learning. Second Edition.
     """
     
     def __init__(self, delta):
@@ -215,6 +219,7 @@ class DLDA:
         self._xmprime = None # xbar'_kj
         self._p = None # class prior probability
         self._labels = None
+        self._model = False
 
     def learn(self, x, y):
         """Learning method.
@@ -263,6 +268,8 @@ class DLDA:
             
             self._xmprime[i] = xm + (mk * (self._xstd + s0) * self._dprime[i])
             self._p[i] = float(nk) / float(n)
+            
+        self._model = True
 
     def labels(self):
         """Outputs the name of labels.
@@ -284,62 +291,111 @@ class DLDA:
         
         return self._dprime
 
-    def _score(self, x):
-        """Return the discriminant score"""
-
-        return - np.sum((x-self._xmprime)**2/self._xstd**2,
-                        axis=1) + (2 * np.log(self._p))
-
-    def _prob(self, x):
-        """Return the probability estimates"""
+    def _pred_values_one(self, t):
+        values = - np.sum((t-self._xmprime)**2/self._xstd**2,
+                          axis=1) + (2 * np.log(self._p))
         
-        score = self._score(x)
-        tmp = np.exp(score * 0.5)
-        return tmp / np.sum(tmp)
+        if self._labels.shape[0] == 2:
+            return np.array([values[0] - values[1]])
+        else:
+            return values
         
-    def pred(self, t):
-        """Does classification on test vector(s) t.
-      
-        :Parameters:
+    def _pred_one(self, t):
+        values = self._pred_values_one(t)
+        
+        if self._labels.shape[0] == 2:
+            if values > 0:
+                return self._labels[0]
+            else:
+                return self._labels[1]
+        else:
+            return self._labels[np.argmax(values)]
+    
+    def pred_values(self, t):
+        """Returns D decision values for eache test sample. 
+        D is 1 if there are two classes (g(t) = g_1(t) - g_2(t)) 
+        and it is the number of classes (g_1(t), g_2(t), ..., g_C(t)) 
+        otherwise.
+        
+        :Parameters :	
            t : 1d (one sample) or 2d array_like object
               test data ([M,] P)
+        :Returns :	
+           decision values : 1d (D) or 2d numpy array (M, D)
+              decision values for each observation.
+        """
+        
+        if not self._model:
+            raise ValueError("no model computed.")
+
+        tarr = np.asarray(t, dtype=np.float)
+                
+        if tarr.ndim == 1:
+            return self._pred_values_one(tarr)
+        else:
+            values = []
+            for i in range(tarr.shape[0]):
+                values.append(self._pred_values_one(tarr[i]))
+            return np.array(values)
+        
+    def pred(self, t):
+        """Does classification on test vector(s) `t`.
+        Returns the class with the highest decision value.
+      
+        :Parameters:
+            t : 1d (one sample) or 2d array_like object
+                test sample(s) ([M,] P)
             
         :Returns:        
-           p : int or 1d numpy array
-              the predicted class(es) for t is returned.
+            p : integer or 1d numpy array
+                predicted class(es)
         """
-        
-        if self._xmprime is None:
+                                
+        if not self._model:
             raise ValueError("no model computed.")
-        
+
         tarr = np.asarray(t, dtype=np.float)
-        
+                
         if tarr.ndim == 1:
-            return self._labels[np.argmax(self._score(tarr))]
+            return self._pred_one(tarr)
         else:
-            ret = np.empty(tarr.shape[0], dtype=np.int)
+            pred = []
             for i in range(tarr.shape[0]):
-                ret[i] = self._labels[np.argmax(self._score(tarr[i]))]
-            return ret
+                pred.append(self._pred_one(tarr[i]))
+            return np.array(pred)
+
+    def _pred_probability_one(self, t):
+        """Return the probability estimates"""
         
-    def prob(self, t):
-        """For each sample returns C (number of classes)
-        probability estimates.
+        values = - np.sum((t-self._xmprime)**2/self._xstd**2,
+                          axis=1) + (2 * np.log(self._p))
+
+        tmp = np.exp(values * 0.5)
+        return tmp / np.sum(tmp)
+        
+    def pred_probability(self, t):
+        """Returns C (number of classes) probability estimates.
+
+        :Parameters :
+           t : 1d (one sample) or 2d array_like object
+              test data ([M,] P)
+        :Returns :
+           probability estimates : 1d (C) or 2d numpy array (M, C)
+              probability estimates for each observation.
         """
 
-        if self._xmprime is None:
+        if not self._model:
             raise ValueError("no model computed.")
-        
+                
         tarr = np.asarray(t, dtype=np.float)
 
         if tarr.ndim == 1:
-            return self._prob(tarr)
+            return self._pred_probability_one(tarr)
         else:
-            ret = np.empty((tarr.shape[0], self._labels.shape[0]),
-                dtype=np.float)
+            ret = []
             for i in range(tarr.shape[0]):
-                ret[i] = self._prob(tarr[i])
-            return ret
+                ret.append(self._pred_probability_one(tarr[i]))
+            return np.array(ret)
 
 
 class KFDAC:
