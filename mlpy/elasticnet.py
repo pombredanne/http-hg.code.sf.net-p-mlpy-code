@@ -270,7 +270,7 @@ class ElasticNetC(ElasticNet):
                tolerance for convergence
         """
         
-        ElasticNet.__init__(self, lmb, eps, supp=True, tol=0.01)
+        ElasticNet.__init__(self, lmb, eps, supp, tol)
         self._labels = None
 
     def learn(self, x, y):
