@@ -40,6 +40,7 @@ class Parzen:
         self._labels = None
         self._kernel = kernel
         self._x = None
+        self._model = False
                 
     def learn(self, K, y):
         """Compute alpha and b.
@@ -75,7 +76,7 @@ class Parzen:
         if self._labels.shape[0] != 2:
             raise ValueError("number of classes != 2")
 
-        ynew = np.where(y_arr==self._labels[0], -1., 1.)
+        ynew = np.where(y_arr==self._labels[0], 1., -1.)
         n = K_arr.shape[0]
         
         # from Kernel Methods for Pattern Analysis
@@ -88,48 +89,86 @@ class Parzen:
         self._b = -0.5 * (np.dot(np.dot(alphaplus, K_arr), alphaplus) - \
                          np.dot(np.dot(alphaminus, K_arr), alphaminus))
         self._alpha = alphaplus - alphaminus
+        
+        self._model = True
+
+    def pred_values(self, Kt):
+        """Returns the decision value g(Kt) for eache test sample.
+        The pred() method chooses self.labels()[0] if g(Kt) > 0, 
+        self.labels()[1] otherwise.
+
+        :Parameters:	
+           t : 1d (one sample) or 2d array_like object
+              test data ([M,] P)
+        :Returns:	
+           decision values : 1d (1) or 2d numpy array (M, 1)
+              decision values for each observation.
+        """
+
+        if not self._model:
+            raise ValueError("no model computed")
+
+        Ktarr = np.asarray(Kt, dtype=np.float)
+        if self._kernel is not None:
+            Ktarr = self._kernel.kernel(Ktarr, self._x)
+
+        try:
+            values = np.dot(self._alpha, Ktarr.T) + self._b
+        except ValueError:
+            raise ValueError("Kt, alpha: shape mismatch")
+
+        if Ktarr.ndim == 1:
+            return np.array([values])
+        else:
+            return values.reshape(-1, 1)
 
     def pred(self, Kt):
-        """Compute the predicted class.
-
+        """Compute the predicted response.
+      
         :Parameters:
            Kt : 1d or 2d array_like object
               precomputed test kernel matrix. (if kernel=None);
               test data in input space (if kernel is a Kernel object).
-
-        :Returns:
-           p : integer or 1d numpy array
-              predicted class
+            
+        :Returns:        
+            p : integer or 1d numpy array
+                the predicted class(es)
         """
 
-        if self._alpha is None:
-            raise ValueError("no model computed; run learn()")
+        values = self.pred_values(Kt)
 
-        Kt_arr = np.asarray(Kt, dtype=np.float)
-        if self._kernel is not None:
-            Kt_arr = self._kernel.kernel(Kt_arr, self._x)
+        if values.ndim == 1:
+            values = values[0]
+        else:
+            values = np.ravel(values)
 
-        try:
-            s = np.sign(np.dot(self._alpha, Kt_arr.T) + self._b)
-        except ValueError:
-            raise ValueError("Kt, alpha: shape mismatch")
-
-        return np.where(s==-1, self._labels[0], self._labels[1]) \
+        return np.where(values > 0, self._labels[0], self._labels[1]) \
             .astype(np.int)
           
     def alpha(self):
         """Return alpha.
         """
+        
+        if not self._model:
+            raise ValueError("no model computed")
+        
         return self._alpha
 
     def b(self):
         """Return b.
         """
+        
+        if not self._model:
+            raise ValueError("no model computed")
+        
         return self._b
     
     def labels(self):
         """Outputs the name of labels.
         """
         
+        if not self._model:
+            raise ValueError("no model computed")
+
         return self._labels
                         

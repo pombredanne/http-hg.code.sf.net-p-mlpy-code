@@ -493,7 +493,10 @@ class KFDAC:
     def labels(self):
         """Outputs the name of labels.
         """
-        
+
+        if not self._model:
+            raise ValueError("no model computed")
+
         return self._labels
         
     def pred_values(self, Kt):
