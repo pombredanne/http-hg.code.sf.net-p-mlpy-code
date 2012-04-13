@@ -6,7 +6,7 @@ Dynamic Time Warping (DTW)
 Standard DTW
 ------------
 
-.. autofunction:: dtw_std(x, y, dist_only=True)
+.. autofunction:: dtw_std(x, y, dist_only=True, squared=False)
 
 Example
 

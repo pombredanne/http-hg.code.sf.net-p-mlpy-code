@@ -24,8 +24,6 @@ __all__ = ['LDAC', 'DLDA', 'KFDAC', 'QDA']
 class LDAC:
     """Linear Discriminant Analysis Classifier.
     See [Hastie09]_, page 106.
-
-    .. [Hastie09] T Hastie, R Tibshirani, J Friedman. The Elements of Statistical Learning. Second Edition.
     """
     
     def __init__(self):
@@ -207,8 +205,6 @@ class DLDA:
     Centroids (NSC).
 
     See [Hastie09]_, pages 651-654.
-
-    .. [Hastie09] T Hastie, R Tibshirani, J Friedman. The Elements of Statistical Learning. Second Edition.
     """
     
     def __init__(self, delta):
@@ -569,8 +565,6 @@ class KFDAC:
 class QDA:
     """Quadratic Discriminant Analysis Classifier.
     See [Hastie09]_, pages 110 and 113.
-
-    .. [Hastie09] T Hastie, R Tibshirani, J Friedman. The Elements of Statistical Learning. Second Edition.
     """
     
     def __init__(self):

@@ -26,17 +26,15 @@ included in mlpy.
    install
    intro
    tutorial
-   lin_regr
-   lin_class
-   kernel
-   nonlin_regr
-   nonlin_class
-   svm
+   regression
+   classification
    liblinear
+   svm
+   reduction
+   kernel
    cluster
    weighting
    selection
-   dim_red
    crossval
    metrics
    stats
