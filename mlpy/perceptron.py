@@ -46,6 +46,7 @@ class Perceptron:
         self._bias = None # bias term
         self._err = None
         self._iters = None
+        self._model = False
 
     def learn(self, x, y):
         """Learning method.
@@ -82,7 +83,7 @@ class Perceptron:
         n = ynew.shape[0]
         
         for i in range(self._maxiters):
-            tmp = np.where((np.dot(xarr, self._w)+self._bias)>0, 1, 0)
+            tmp = np.where((np.dot(xarr, self._w)+self._bias)>0, 0, 1)
             err = np.sum(ynew != tmp) / float(n)
             
             if err <= self._thr:
@@ -90,14 +91,45 @@ class Perceptron:
                 break
      
             diff = ynew - tmp
-            self._w += self._alpha * np.dot(xarr.T, diff)
-            self._bias += self._alpha * np.sum(diff)
+            self._w -= self._alpha * np.dot(xarr.T, diff)
+            self._bias -= self._alpha * np.sum(diff)
                  
-        tmp = np.where((np.dot(xarr, self._w)+self._bias)>0, 1, 0)
+        tmp = np.where((np.dot(xarr, self._w)+self._bias)>0, 0, 1)
         err = np.sum(ynew != tmp) / float(n)
 
         self._err = err
         self._iters = i + 1
+        self._model = True
+
+    def pred_values(self, t):
+        """Returns the decision value g(t) for eache test sample.
+        The pred() method chooses self.labels()[0] if g(t) > 0, 
+        self.labels()[1] otherwise.
+
+        :Parameters:
+           t : 1d (one sample) or 2d array_like object
+              test data ([M,] P)
+        :Returns:	
+           decision values : 1d (1) or 2d numpy array (M, 1)
+              decision values for each observation.
+        """
+
+        if not self._model:
+            raise ValueError("no model computed")
+
+        tarr = np.asarray(t, dtype=np.float)
+        if tarr.ndim > 2:
+            raise ValueError("t must be an 1d or a 2d array_like object")
+        
+        try:
+            values = np.dot(tarr, self._w) + self._bias
+        except ValueError:
+            raise ValueError("t, w: shape mismatch")
+
+        if tarr.ndim == 1:
+            return np.array([values])
+        else:
+            return values.reshape(-1, 1)
 
     def pred(self, t):
         """Prediction method.
@@ -106,27 +138,22 @@ class Perceptron:
            t : 1d or 2d array_like object
               testing data ([M,], P)
         """
-
-        if self._w is None:
-            raise ValueError("no model computed")
-
-        tarr = np.asarray(t, dtype=np.float)
-        if tarr.ndim > 2:
-            raise ValueError("t must be an 1d or a 2d array_like object")
         
-        try:
-            tmp = np.dot(tarr, self._w) + self._bias
-        except ValueError:
-            raise ValueError("t, model: shape mismatch")
+        values = self.pred_values(t)
 
-        return np.where(tmp>0, self._labels[1], self._labels[0]) \
+        if values.ndim == 1:
+            values = values[0]
+        else:
+            values = np.ravel(values)
+
+        return np.where(values > 0, self._labels[0], self._labels[1]) \
             .astype(np.int)
-        
+    
     def w(self):
         """Returns the coefficients.
         """
-
-        if self._w is None:
+        
+        if not self._model:
             raise ValueError("no model computed")
 
         return self._w
@@ -135,23 +162,33 @@ class Perceptron:
         """Outputs the name of labels.
         """
         
+        if not self._model:
+            raise ValueError("no model computed")
+
         return self._labels
 
     def bias(self):
         """Returns the bias."""
         
-        if self._w is None:
-            raise ValueError("no model computed.")
+        if not self._model:
+            raise ValueError("no model computed")
 
         return self._bias
 
     def err(self):
         """Returns the iteration error"""
-        
+                
+        if not self._model:
+            raise ValueError("no model computed.")
+
         return self._err
     
     def iters(self):
         """Returns the number of iterations"""
+
+        
+        if not self._model:
+            raise ValueError("no model computed.")
 
         return self._iters
 

@@ -100,7 +100,7 @@ class LDAC:
         """
         
         if not self._model:
-            raise ValueError("no model computed.")
+            raise ValueError("no model computed")
 
         if self._labels.shape[0] == 2:
             return self._w[0] - self._w[1]
@@ -115,7 +115,7 @@ class LDAC:
         """
         
         if not self._model:
-            raise ValueError("no model computed.")
+            raise ValueError("no model computed")
         
         if self._labels.shape[0] == 2:
             return self._bias[0] - self._bias[1]
@@ -159,7 +159,7 @@ class LDAC:
         """
 
         if not self._model:
-            raise ValueError("no model computed.")
+            raise ValueError("no model computed")
 
         tarr = np.asarray(t, dtype=np.float)
                 
@@ -185,7 +185,7 @@ class LDAC:
         """
                                 
         if not self._model:
-            raise ValueError("no model computed.")
+            raise ValueError("no model computed")
 
         tarr = np.asarray(t, dtype=np.float)
                 
@@ -329,7 +329,7 @@ class DLDA:
         """
         
         if not self._model:
-            raise ValueError("no model computed.")
+            raise ValueError("no model computed")
 
         tarr = np.asarray(t, dtype=np.float)
                 
@@ -355,7 +355,7 @@ class DLDA:
         """
                                 
         if not self._model:
-            raise ValueError("no model computed.")
+            raise ValueError("no model computed")
 
         tarr = np.asarray(t, dtype=np.float)
                 
@@ -388,7 +388,7 @@ class DLDA:
         """
 
         if not self._model:
-            raise ValueError("no model computed.")
+            raise ValueError("no model computed")
                 
         tarr = np.asarray(t, dtype=np.float)
 
@@ -501,16 +501,16 @@ class KFDAC:
         The pred() method chooses self.labels()[0] if g(Kt) > 0, 
         self.labels()[1] otherwise.
 
-        :Parameters :	
+        :Parameters:	
            t : 1d (one sample) or 2d array_like object
               test data ([M,] P)
-        :Returns :	
+        :Returns:	
            decision values : 1d (1) or 2d numpy array (M, 1)
               decision values for each observation.
         """
 
         if not self._model:
-            raise ValueError("no model computed.")
+            raise ValueError("no model computed")
 
         Ktarr = np.asarray(Kt, dtype=np.float)
         if self._kernel is not None:
@@ -664,7 +664,7 @@ class QDA:
         """
         
         if not self._model:
-            raise ValueError("no model computed.")
+            raise ValueError("no model computed")
 
         tarr = np.asarray(t, dtype=np.float)
                 
@@ -690,7 +690,7 @@ class QDA:
         """
                                 
         if not self._model:
-            raise ValueError("no model computed.")
+            raise ValueError("no model computed")
 
         tarr = np.asarray(t, dtype=np.float)
                 
