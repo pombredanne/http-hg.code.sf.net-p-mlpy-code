@@ -290,7 +290,7 @@ class ElasticNetC(ElasticNet):
         if k != 2:
             raise ValueError("number of classes must be = 2")
 
-        ynew = np.where(yarr == self._labels[0], -1, 1) 
+        ynew = np.where(yarr == self._labels[0], -1, 1)
 
         ElasticNet.learn(self, x, ynew)
 

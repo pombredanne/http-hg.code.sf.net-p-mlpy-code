@@ -23,7 +23,7 @@ class Golub:
     """Golub binary classifier described in [Golub99]_.
 
     Decision function is D(x) = w (x-mu), where w is defined
-    as w_i = (mu_i(+) - mu_i(-)) / (std_i(+) + std_i(-)) and 
+    as w_i = - (mu_i(+) - mu_i(-)) / (std_i(+) + std_i(-)) and 
     mu id defined as (mu(+) + mu(-)) / 2.
 
     .. [Golub99] T R Golub et al. Molecular classification of cancer: Class discovery and class prediction by gene expression monitoring. Science, 1999.
@@ -35,8 +35,9 @@ class Golub:
         
         self._labels = None
         self._w = None
-        self._mean = None
-        
+        self._bias = None
+        self._model = False
+
     def learn(self, x, y):
         """Learning method.
         
@@ -71,43 +72,81 @@ class Golub:
         meanp = np.mean(xarr[idxp], axis=0)
         stdn = np.std(xarr[idxn], axis=0, ddof=1)
         stdp = np.std(xarr[idxp], axis=0, ddof=1)
-        self._w = (meanp - meann) / (stdp + stdn)
-        self._mean = 0.5 * (meanp + meann)
+        self._w = - ((meanp - meann) / (stdp + stdn))
+        self._bias = - np.sum(self._w * (0.5 * (meanp + meann)))
         
-    def pred(self, t):
-        """Prediction method.
-        
+        self._model = True
+
+    def pred_values(self, t):
+        """Returns the decision value g(t) for eache test sample.
+        The pred() method chooses self.labels()[0] if g(t) > 0, 
+        self.labels()[1] otherwise.
+
         :Parameters:
-           t : 1d or 2d array_like object
-              testing data ([M,], P)
+           t : 1d (one sample) or 2d array_like object
+              test data ([M,] P)
+        :Returns:	
+           decision values : 1d (1) or 2d numpy array (M, 1)
+              decision values for each observation.
         """
 
-        if self._w is None:
+        if not self._model:
             raise ValueError("no model computed")
-        
+
         tarr = np.asarray(t, dtype=np.float)
         if tarr.ndim > 2:
             raise ValueError("t must be an 1d or a 2d array_like object")
         
         try:
-            tmp = np.dot(tarr-self._mean, self._w)
+            values = np.dot(tarr, self._w) + self._bias
         except ValueError:
-            raise ValueError("t, model: shape mismatch")
+            raise ValueError("t, w: shape mismatch")
+
+        if tarr.ndim == 1:
+            return np.array([values])
+        else:
+            return values.reshape(-1, 1)
+
+    def pred(self, t):
+        """Prediction method.
+
+        :Parameters:
+           t : 1d or 2d array_like object
+              testing data ([M,], P)
+        """
         
-        return np.where(tmp>0, self._labels[1], self._labels[0]) \
+        values = self.pred_values(t)
+
+        if values.ndim == 1:
+            values = values[0]
+        else:
+            values = np.ravel(values)
+
+        return np.where(values > 0, self._labels[0], self._labels[1]) \
             .astype(np.int)
     
     def w(self):
         """Returns the coefficients.
         """
         
-        if self._w is None:
+        if not self._model:
             raise ValueError("no model computed")
         
         return self._w
 
+    def bias(self):
+        """Returns the bias."""
+        
+        if not self._model:
+            raise ValueError("no model computed")
+
+        return self._bias
+
     def labels(self):
         """Outputs the name of labels.
         """
+        
+        if not self._model:
+            raise ValueError("no model computed")
         
         return self._labels
