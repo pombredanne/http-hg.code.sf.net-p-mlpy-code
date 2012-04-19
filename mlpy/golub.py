@@ -20,17 +20,14 @@ __all__ = ["Golub"]
 
 
 class Golub:
-    """Golub binary classifier described in [Golub99]_.
-
-    Decision function is D(x) = w (x-mu), where w is defined
-    as w_i = - (mu_i(+) - mu_i(-)) / (std_i(+) + std_i(-)) and 
-    mu id defined as (mu(+) + mu(-)) / 2.
-
-    .. [Golub99] T R Golub et al. Molecular classification of cancer: Class discovery and class prediction by gene expression monitoring. Science, 1999.
+    """Golub binary classifier.
+    The decision velues are computed as d(t) = w(t-mu), where w 
+    is defined as w_i = - (mu_i(+) - mu_i(-)) / (std_i(+) + std_i(-)) 
+    and mu id defined as (mu(+) + mu(-)) / 2.
     """
     
     def __init__(self):
-        """Initialization.
+        """
         """
         
         self._labels = None
@@ -78,11 +75,9 @@ class Golub:
         self._model = True
 
     def pred_values(self, t):
-        """Returns the decision value g(t) for eache test sample.
-        The pred() method chooses self.labels()[0] if g(t) > 0, 
-        self.labels()[1] otherwise.
-
-        :Parameters:
+        """Returns the decision value (d(Kt)) for eache test sample.
+        
+        :Parameters:	
            t : 1d (one sample) or 2d array_like object
               test data ([M,] P)
         :Returns:	
@@ -108,11 +103,16 @@ class Golub:
             return values.reshape(-1, 1)
 
     def pred(self, t):
-        """Prediction method.
-
+        """Does classification on test vector(s) `t`.
+        Returns l_1 if g(t) > 0, l_2 otherwise.
+      
         :Parameters:
            t : 1d or 2d array_like object
-              testing data ([M,], P)
+              test sample(s) ([M,] P)
+            
+        :Returns:        
+            p : integer or 1d numpy array
+               the predicted class(es)
         """
         
         values = self.pred_values(t)
@@ -126,7 +126,7 @@ class Golub:
             .astype(np.int)
     
     def w(self):
-        """Returns the coefficients.
+        """Returns the slope coefficients.
         """
         
         if not self._model:
@@ -135,7 +135,7 @@ class Golub:
         return self._w
 
     def bias(self):
-        """Returns the bias."""
+        """Returns the intercept."""
         
         if not self._model:
             raise ValueError("no model computed")
@@ -143,7 +143,7 @@ class Golub:
         return self._bias
 
     def labels(self):
-        """Outputs the name of labels.
+        """Returns the class labels.
         """
         
         if not self._model:

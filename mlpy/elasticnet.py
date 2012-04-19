@@ -113,7 +113,7 @@ def elasticnet_base(x, y, lmb, eps, supp=True, tol=0.01):
     return beta, k
 
 
-class ElasticNet(object):
+class ElasticNet:
     """Elastic Net Regularization via Iterative Soft Thresholding.
 
     Computes the coefficient vector which solves the elastic-net
@@ -155,6 +155,7 @@ class ElasticNet(object):
         self._beta = None
         self._beta0 = None
         self._iters = None
+        self._model = False
 
     def learn(self, x, y):
         """Compute the regression coefficients.
@@ -193,6 +194,8 @@ class ElasticNet(object):
             lmb=self._lmb, eps=self._eps, supp=self._supp, tol=self._tol)
         self._beta /= xnorm
         self._beta0 = ymean - np.dot(xmean, self._beta)
+        
+        self._model = True
 
     def pred(self, t):
         """Compute the predicted response.
@@ -206,8 +209,8 @@ class ElasticNet(object):
               predicted response
         """
 
-        if self._beta0 is None:
-            raise ValueError('no mode computed; run learn() first')
+        if not self._model:
+            raise ValueError('no model computed.')
 
         tarr = np.asarray(t, dtype=np.float)
 
@@ -222,29 +225,36 @@ class ElasticNet(object):
         return p
 
     def iters(self):
-        """Return the number of iterations performed.
+        """Returns the number of iterations performed.
         """
+
+        if not self._model:
+            raise ValueError('no model computed.')
 
         return self._iters
 
     def beta(self):
-        """Return b_1, ..., b_p.
+        """Returns the slope coefficients.
         """
-
+        
+        if not self._model:
+            raise ValueError('no model computed.')
+        
         return self._beta
 
     def beta0(self):
-        """Return b_0.
+        """Return intercept coefficient.
         """
-
+        
+        if not self._model:
+            raise ValueError('no model computed.')
+        
         return self._beta0
 
 
-class ElasticNetC(ElasticNet):
+class ElasticNetC:
     """Elastic Net Regularization via Iterative Soft Thresholding
-    for classification.
-
-    See the ElasticNet class documentation.
+    for classification. See the ElasticNet class documentation.
     """
 
     def __init__(self, lmb, eps, supp=True, tol=0.01):
@@ -270,17 +280,17 @@ class ElasticNetC(ElasticNet):
                tolerance for convergence
         """
         
-        ElasticNet.__init__(self, lmb, eps, supp, tol)
+        self._en = ElasticNet(lmb, eps, supp, tol)
         self._labels = None
 
     def learn(self, x, y):
-        """Compute the classification coefficients.
+        """Learning method.
 
         :Parameters:
-          x : 2d array_like object (N x P)
-            matrix
-          y : 1d array_like object integer (N)
-            class labels
+          x : 2d array_like object
+            training data (N, P)
+          y : 1d array_like object integer (only two classes)
+            target values (N)
         """
 
         yarr = np.asarray(y, dtype=np.int)
@@ -290,45 +300,67 @@ class ElasticNetC(ElasticNet):
         if k != 2:
             raise ValueError("number of classes must be = 2")
 
-        ynew = np.where(yarr == self._labels[0], -1, 1)
+        ynew = np.where(yarr == self._labels[0], 1, -1)
 
-        ElasticNet.learn(self, x, ynew)
+        self._en.learn(x, ynew)
 
+    def pred_values(self, t):
+        """Returns the decision value (d(t)) for eache test sample.
+        
+        :Parameters:	
+           t : 1d (one sample) or 2d array_like object
+              test data ([M,] P)
+        :Returns:	
+           decision values : 1d (1) or 2d numpy array (M, 1)
+              decision values for each observation.
+        """
+        
+        values = np.array([self._en.pred(t)])
+
+        if values.ndim == 1:
+            return values
+        else:
+            return values.reshape(-1, 1)
+        
     def pred(self, t):
-        """Compute the predicted labels.
+        """Does classification on test vector(s) `t`.
 
         :Parameters:
-           t : 1d or 2d array_like object ([M,] P)
-              test data
+           t : 1d or 2d array_like object
+              test sample(s) ([M,] P)
 
         :Returns:
            p : integer or 1d numpy array
-              predicted labels
+              predicted class(es)
         """
+        
+        values = self.pred_values(t)
+        
+        if values.ndim == 1:
+            values = values[0]
+        else:
+            values = np.ravel(values)
 
-        p = ElasticNet.pred(self, t)
-        ret = np.where(p>0, self._labels[1], self._labels[0])
-
-        return ret
-
+        return np.where(values > 0, self._labels[0], self._labels[1]) \
+            .astype(np.int)
+    
     def w(self):
-        """Returns the coefficients.
+        """Returns the slope coefficients.
         """
-        if ElasticNet.beta(self) is None:
-            raise ValueError("No model computed")
 
-        return super(ElasticNetC, self).beta()
+        return self._en.beta()
 
     def bias(self):
-        """Returns the bias.
+        """Returns the intercept.
         """
-        if ElasticNet.beta0(self) is None:
-            raise ValueError("No model computed")
 
-        return super(ElasticNetC, self).beta0()
+        return self._en.beta0()
 
     def labels(self):
-        """Outputs the name of labels.
+        """Returns the class labels.
         """
+        
+        if not self._en._model:
+            raise ValueError("no model computed")
         
         return self._labels

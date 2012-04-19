@@ -202,14 +202,13 @@ cdef class LibSvm:
         self.problem.l = xarr.shape[0]
                 
     def learn(self, x, y):
-        """Constructs the model.
+        """Learning method.
         For classification, y is an integer indicating the class label
         (multi-class is supported). For regression, y is the target
         value which can be any real number. For one-class SVM, it's not used
         so can be any number.
         
         :Parameters:
-        
             x : 2d array_like object
                 training data (N, P)
             y : 1d array_like object
@@ -272,25 +271,25 @@ cdef class LibSvm:
         return p
 
     def pred_values(self, t):
-        """Returns D decision values. 
+        """Returns D decision values for eache test sample. 
         For a classification model with C classes, this method
         returns D=C*(C-1)/2 decision values for each test sample. 
-        The order is label[0] vs. label[1], ..., label[0] vs. 
-        label[C-1], label[1] vs. label[2], ..., label[C-2] vs. 
-        label[C-1], where label can be obtained from the method labels().
+        The order is l[0] vs. l[1], ..., l[0] vs. l[C-1], l[1] vs. 
+        l[2], ..., l[C-2] vs. l[C-1], where l can be obtained 
+        from the labels() method.
         
         For a one-class model, this method returns D=1 decision value 
         for each test sample.
         
         For a regression model, this method returns the predicted
-        value as in pred()
+        value as in pred().
                 
         :Parameters:
             t : 1d (one sample) or 2d array_like object
                 test data ([M,] P)
             
         :Returns:
-            decision values : 1d (D) or 2d numpy array (M,D)
+            decision values : 1d (D) or 2d numpy array (M, D)
                 decision values for each observation.
         """
 
@@ -398,7 +397,7 @@ cdef class LibSvm:
    
 
     def labels(self):
-        """For a classification model, this method outputs the name of
+        """For a classification model, this method outputs class
         labels. For regression and one-class models, this method
         returns None.
         """
@@ -413,16 +412,6 @@ cdef class LibSvm:
             for i in range(self.model.nr_class):
                 ret[i] = self.model.label[i]
             return ret
-
-    def nclasses(self):
-        """Get the number of classes.
-        = 2 in regression and in one class SVM
-        """
-        
-        if self.model is NULL:
-            raise ValueError("no model computed")
-
-        return self.model.nr_class
 
     def nsv(self):
         """Get the total number of support vectors.

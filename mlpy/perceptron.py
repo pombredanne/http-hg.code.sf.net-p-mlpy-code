@@ -18,8 +18,41 @@ import numpy as np
 
 __all__ = ["Perceptron"]
 
+
+def perceptron(x, y, alpha, thr, maxiters, w, bias):
+    
+    labels = np.unique(y)
+    
+    # binarize y
+    r = []
+    for l in labels:
+        r.append((y == l).astype(np.int))
+    r = np.array(r).T
+
+    for i in range(1, maxiters+1):
+        v = np.dot(x, w.T) + bias
+        
+        yp = labels[np.argmax(v, axis=1)]
+        err = np.sum(y != yp) / float(y.shape[0])
+        if err <= thr:
+            return i-1, err
+
+        rn = np.where(v > 0, 1, 0)
+       
+        for k in range(r.shape[1]):
+            d = r[:, k] - rn[:, k]
+            w[k] += alpha * np.dot(x.T, d)
+            bias[k] += alpha * np.sum(d)
+        
+    v = np.dot(x, w.T) + bias
+    yp = labels[np.argmax(v, axis=1)]
+    err = np.sum(y != yp) / float(y.shape[0])
+    return i, err
+
+
 class Perceptron:
-    """Perceptron binary classifier.
+    """Offline Single Layer Perceptron Classifier, trained
+    by stochastic gradient descent.
     """
 
     def __init__(self, alpha=0.1, thr=0.0, maxiters=1000):
@@ -31,26 +64,25 @@ class Perceptron:
            alpha : float, in range (0.0, 1]
               learning rate
            thr : float, in range [0.0, 1.0]
-              iteration error (e.g. thr=0.13 for error=13%) 
+              iteration error (e.g. thr=0.10 for error=10%) 
            maxiters : integer (>0)
               maximum number of iterations
         """
 
-
         self._alpha = alpha # learning rate, where 0.0 < alpha <= 1
-        self._maxiters = maxiters
         self._thr = float(thr) # error threshold
-
+        self._maxiters = maxiters
+              
         self._labels = None
-        self._w = None
-        self._bias = None # bias term
+        self._w = None # slope
+        self._bias = None # intercept
         self._err = None
         self._iters = None
         self._model = False
 
     def learn(self, x, y):
         """Learning method.
-
+        
         :Parameters:
            x : 2d array_like object
               training data (N, P)
@@ -58,7 +90,7 @@ class Perceptron:
               target values (N)
         """
 
-        xarr = np.asarray(x, dtype=np.float)
+        xarr = np.array(x, dtype=np.float)
         yarr = np.asarray(y, dtype=np.int)
         
         if xarr.ndim != 2:
@@ -73,44 +105,51 @@ class Perceptron:
         self._labels = np.unique(yarr)
         k = self._labels.shape[0]
         
-        if k != 2:
-            raise ValueError("number of classes must be = 2")
+        if k < 2:
+            raise ValueError("number of classes must be >= 2")
         
-        ynew = np.where(yarr == self._labels[0], 0, 1)
-        
-        self._w = np.zeros(xarr.shape[1], dtype=np.float)
-        self._bias = 0.0
-        n = ynew.shape[0]
-        
-        for i in range(self._maxiters):
-            tmp = np.where((np.dot(xarr, self._w)+self._bias)>0, 0, 1)
-            err = np.sum(ynew != tmp) / float(n)
-            
-            if err <= self._thr:
-                i = i - 1
-                break
-     
-            diff = ynew - tmp
-            self._w -= self._alpha * np.dot(xarr.T, diff)
-            self._bias -= self._alpha * np.sum(diff)
-                 
-        tmp = np.where((np.dot(xarr, self._w)+self._bias)>0, 0, 1)
-        err = np.sum(ynew != tmp) / float(n)
+        self._w = np.zeros((k, x.shape[1]), dtype=np.float)
+        self._bias = np.zeros((k, ), dtype=np.float)
 
-        self._err = err
-        self._iters = i + 1
+        self._iters, self._err = perceptron(xarr, yarr, self._alpha, self._thr, 
+            self._maxiters, self._w, self._bias)
+
         self._model = True
+    
+    def _pred_values_one(self, t):
+        values = np.empty(self._labels.shape[0], dtype=np.float)
+        
+        for i in range(self._labels.shape[0]):
+            values[i] = np.dot(t, self._w[i]) + self._bias[i]
+            
+        if self._labels.shape[0] == 2:
+            return np.array([values[0] - values[1]])
+        else:
+            return values
+
+    def _pred_one(self, t):
+        values = self._pred_values_one(t)
+        
+        if self._labels.shape[0] == 2:
+            if values > 0:
+                return self._labels[0]
+            else:
+                return self._labels[1]
+        else:
+            return self._labels[np.argmax(values)]
 
     def pred_values(self, t):
-        """Returns the decision value g(t) for eache test sample.
-        The pred() method chooses self.labels()[0] if g(t) > 0, 
-        self.labels()[1] otherwise.
-
+        """Returns D decision values for eache test sample. 
+        D is 1 if there are two classes (d(t) = d_1(t) - d_2(t)) 
+        and it is the number of classes (d_1(t), d_2(t), ..., d_C(t)) 
+        otherwise.
+        
         :Parameters:
            t : 1d (one sample) or 2d array_like object
               test data ([M,] P)
-        :Returns:	
-           decision values : 1d (1) or 2d numpy array (M, 1)
+
+        :Returns :	
+           decision values : 1d (D) or 2d numpy array (M, D)
               decision values for each observation.
         """
 
@@ -118,48 +157,59 @@ class Perceptron:
             raise ValueError("no model computed")
 
         tarr = np.asarray(t, dtype=np.float)
-        if tarr.ndim > 2:
-            raise ValueError("t must be an 1d or a 2d array_like object")
-        
-        try:
-            values = np.dot(tarr, self._w) + self._bias
-        except ValueError:
-            raise ValueError("t, w: shape mismatch")
-
+                
         if tarr.ndim == 1:
-            return np.array([values])
+            return self._pred_values_one(tarr)
         else:
-            return values.reshape(-1, 1)
+            values = []
+            for i in range(tarr.shape[0]):
+                values.append(self._pred_values_one(tarr[i]))
+            return np.array(values)
 
     def pred(self, t):
-        """Prediction method.
-
-        :Parameters:
-           t : 1d or 2d array_like object
-              testing data ([M,], P)
-        """
+        """Does classification on test vector(s) `t`.
+        Returns the class with the highest decision value.
         
-        values = self.pred_values(t)
+        :Parameters:
+            t : 1d (one sample) or 2d array_like object
+               test sample(s) ([M,] P)
+            
+        :Returns:        
+            p : integer or 1d numpy array
+               predicted class(es)
+        """
+                                
+        if not self._model:
+            raise ValueError("no model computed")
 
-        if values.ndim == 1:
-            values = values[0]
+        tarr = np.asarray(t, dtype=np.float)
+                
+        if tarr.ndim == 1:
+            return self._pred_one(tarr)
         else:
-            values = np.ravel(values)
-
-        return np.where(values > 0, self._labels[0], self._labels[1]) \
-            .astype(np.int)
+            pred = []
+            for i in range(tarr.shape[0]):
+                pred.append(self._pred_one(tarr[i]))
+            return np.array(pred)
     
     def w(self):
-        """Returns the coefficients.
+        """Returns the slope coefficients. For multiclass 
+        classification returns a 2d numpy array where each
+        row contains the coefficients of label i (w_i). 
+        For binary classification an 1d numpy array 
+        (w_1 - w_2) is returned.
         """
         
         if not self._model:
             raise ValueError("no model computed")
 
-        return self._w
+        if self._labels.shape[0] == 2:
+            return self._w[0] - self._w[1]
+        else:
+            return self._w
 
     def labels(self):
-        """Outputs the name of labels.
+        """Returns the class labels.
         """
         
         if not self._model:
@@ -168,12 +218,20 @@ class Perceptron:
         return self._labels
 
     def bias(self):
-        """Returns the bias."""
+        """Returns the intercept. For multiclass 
+        classification returns a 1d numpy array where each
+        element contains the coefficient of label i (bias_i). 
+        For binary classification a float (bias_1 - bias_2) 
+        is returned.
+        """
         
         if not self._model:
             raise ValueError("no model computed")
 
-        return self._bias
+        if self._labels.shape[0] == 2:
+            return self._bias[0] - self._bias[1]
+        else:
+            return self._bias
 
     def err(self):
         """Returns the iteration error"""
@@ -184,12 +242,9 @@ class Perceptron:
         return self._err
     
     def iters(self):
-        """Returns the number of iterations"""
-
+        """Returns the number of iterations performed"""
         
         if not self._model:
             raise ValueError("no model computed.")
 
         return self._iters
-
-    

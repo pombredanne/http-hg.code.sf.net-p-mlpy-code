@@ -99,6 +99,7 @@ array([0, 1, 2])
 
 Quadratic Discriminant Analysis (QDA)
 -------------------------------------
+Described in [Hastie09]_, pages 110 and 113.
 
 .. autoclass:: QDA
    :members:
@@ -141,6 +142,7 @@ Example:
 
 Diagonal Linear Discriminant Analysis (DLDA)
 --------------------------------------------
+Described in [Hastie09]_, pages 651-654.
 
 .. autoclass:: DLDA
    :members:
@@ -179,6 +181,7 @@ Example:
 
 Kernel Fisher Discriminant Classifier (KFDA)
 --------------------------------------------
+See [Gavin03]_.
 
 .. autoclass:: KFDAC
    :members:
@@ -191,8 +194,8 @@ Gaussian Naive Bayes
    :members:
 
 
-Basic Perceptron
-----------------
+Single Layer Perceptron
+-----------------------
 
 .. autoclass:: Perceptron
    :members:
@@ -217,10 +220,10 @@ Examples
 >>> p.learn(x, y)
 >>> w = p.w()
 >>> w
-array([69.00185254,  -46.49202132])
+array([ 138.00370508,  -92.98404264])
 >>> b = p.bias()
 >>> b
-59.600000000000001
+119.2
 >>> p.err()
 0.050000000000000003
 >>> p.iters()
@@ -294,6 +297,7 @@ See :doc:`liblinear`
 
 Golub Classifier
 ----------------
+Described in [Golub99]_.
 
 .. autoclass:: Golub
    :members:
@@ -360,7 +364,6 @@ k-Nearest-Neighbor
        	
 	.. automethod:: learn(x, y)
         .. automethod:: pred(t)
-	.. automethod:: nclasses()
 	.. automethod:: labels()
 
 Example:
@@ -412,7 +415,6 @@ Classification Tree
 	       	
 	.. automethod:: learn(x, y)
         .. automethod:: pred(t)
-	.. automethod:: nclasses()
 	.. automethod:: labels()
 
 
@@ -451,3 +453,5 @@ Example:
 
 
 .. [Hastie09] T Hastie, R Tibshirani, J Friedman. The Elements of Statistical Learning. Second Edition.
+.. [Gavin03] Gavin C. et al. Efficient Cross-Validation of Kernel Fisher Discriminant Classifers. ESANN'2003 proceedings - European Symposium on Artificial Neural Networks, 2003.
+.. [Golub99] T R Golub et al. Molecular classification of cancer: Class discovery and class prediction by gene expression monitoring. Science, 1999.

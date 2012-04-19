@@ -23,11 +23,10 @@ __all__ = ['LDAC', 'DLDA', 'KFDAC', 'QDA']
 
 class LDAC:
     """Linear Discriminant Analysis Classifier.
-    See [Hastie09]_, page 106.
     """
     
     def __init__(self):
-        """Initialization.
+        """
         """
 
         self._labels = None
@@ -84,7 +83,7 @@ class LDAC:
         self._model = True
 
     def labels(self):
-        """Outputs the name of labels.
+        """Returns the class labels.
         """
 
         if not self._model:
@@ -93,11 +92,11 @@ class LDAC:
         return self._labels
         
     def w(self):
-        """Returns the coefficients.
-        For multiclass classification this method returns a 2d 
-        numpy array where w[i] contains the coefficients of label i.
-        For binary classification an 1d numpy array (w = w_0 - w_1)
-        is returned.
+        """Returns the slope coefficients. For multiclass 
+        classification returns a 2d numpy array where each
+        row contains the coefficients of label i (w_i). 
+        For binary classification an 1d numpy array 
+        (w_1 - w_2) is returned.
         """
         
         if not self._model:
@@ -109,10 +108,11 @@ class LDAC:
             return self._w
 
     def bias(self):
-        """Returns the bias.
-        For multiclass classification this method returns a 1d 
-        numpy array where b[i] contains the coefficients of label i. 
-        For binary classification a float (b = b_0 - b_1) is returned.
+        """Returns the intercept. For multiclass 
+        classification returns a 1d numpy array where each
+        element contains the coefficient of label i (bias_i). 
+        For binary classification a float (bias_1 - bias_2) 
+        is returned.
         """
         
         if not self._model:
@@ -147,8 +147,8 @@ class LDAC:
 
     def pred_values(self, t):
         """Returns D decision values for eache test sample. 
-        D is 1 if there are two classes (g(t) = g_1(t) - g_2(t)) 
-        and it is the number of classes (g_1(t), g_2(t), ..., g_C(t)) 
+        D is 1 if there are two classes (d(t) = d_1(t) - d_2(t)) 
+        and it is the number of classes (d_1(t), d_2(t), ..., d_C(t)) 
         otherwise.
         
         :Parameters :	
@@ -203,8 +203,6 @@ class DLDA:
     """Diagonal Linear Discriminant Analysis classifier.
     The algorithm uses the procedure called Nearest Shrunken
     Centroids (NSC).
-
-    See [Hastie09]_, pages 651-654.
     """
     
     def __init__(self, delta):
@@ -274,7 +272,7 @@ class DLDA:
         self._model = True
 
     def labels(self):
-        """Outputs the name of labels.
+        """Returns the class labels.
         """
         
         return self._labels
@@ -315,8 +313,8 @@ class DLDA:
     
     def pred_values(self, t):
         """Returns D decision values for eache test sample. 
-        D is 1 if there are two classes (g(t) = g_1(t) - g_2(t)) 
-        and it is the number of classes (g_1(t), g_2(t), ..., g_C(t)) 
+        D is 1 if there are two classes (d(t) = d_1(t) - d_2(t)) 
+        and it is the number of classes (d_1(t), d_2(t), ..., d_C(t)) 
         otherwise.
         
         :Parameters :	
@@ -401,10 +399,7 @@ class DLDA:
 
 
 class KFDAC:
-    """Kernel Fisher Discriminant Analysis Classifier (binary classifier).
-    The bias term (b) is computed as in [Gavin03]_.
-
-    .. [Gavin03] Gavin C. et al. Efficient Cross-Validation of Kernel Fisher Discriminant Classifers. ESANN'2003 proceedings - European Symposium on Artificial Neural Networks, 2003.
+    """Kernel Fisher Discriminant Analysis Classifier (binary).
     """
     
     def __init__(self, lmb=0.001, kernel=None):
@@ -490,7 +485,7 @@ class KFDAC:
         self._model = True
         
     def labels(self):
-        """Outputs the name of labels.
+        """Returns the class labels.
         """
 
         if not self._model:
@@ -499,10 +494,8 @@ class KFDAC:
         return self._labels
         
     def pred_values(self, Kt):
-        """Returns the decision value g(Kt) for eache test sample.
-        The pred() method chooses self.labels()[0] if g(Kt) > 0, 
-        self.labels()[1] otherwise.
-
+        """Returns the decision value (d(Kt)) for eache test sample.
+        
         :Parameters:	
            t : 1d (one sample) or 2d array_like object
               test data ([M,] P)
@@ -529,16 +522,17 @@ class KFDAC:
             return values.reshape(-1, 1)
 
     def pred(self, Kt):
-        """Compute the predicted response.
+        """Does classification on test vector(s) `Kt`.
+        Returns l_1 if g(Kt) > 0, l_2 otherwise.
       
         :Parameters:
            Kt : 1d or 2d array_like object
-              precomputed test kernel matrix. (if kernel=None);
-              test data in input space (if kernel is a Kernel object).
+               precomputed test kernel matrix. (if kernel=None);
+               test data in input space (if kernel is a Kernel object).
             
         :Returns:        
             p : integer or 1d numpy array
-                the predicted class(es)
+               the predicted class(es)
         """
 
         values = self.pred_values(Kt)
@@ -554,17 +548,18 @@ class KFDAC:
     def alpha(self):
         """Return alpha.
         """
+
         return self._alpha
 
     def b(self):
         """Return b.
         """
+
         return self._b
 
 
 class QDA:
     """Quadratic Discriminant Analysis Classifier.
-    See [Hastie09]_, pages 110 and 113.
     """
     
     def __init__(self):
@@ -651,14 +646,14 @@ class QDA:
                                 
     def pred_values(self, t):
         """Returns D decision values for eache test sample. 
-        D is 1 if there are two classes (g(t) = g_1(t) - g_2(t)) 
-        and it is the number of classes (g_1(t), g_2(t), ..., g_C(t)) 
+        D is 1 if there are two classes (d(t) = d_1(t) - d_2(t)) 
+        and it is the number of classes (d_1(t), d_2(t), ..., d_C(t)) 
         otherwise.
         
-        :Parameters :	
+        :Parameters:	
            t : 1d (one sample) or 2d array_like object
               test data ([M,] P)
-        :Returns :	
+        :Returns:	
            decision values : 1d (D) or 2d numpy array (M, D)
               decision values for each observation.
         """
@@ -703,7 +698,7 @@ class QDA:
             return np.array(pred)
 
     def labels(self):
-        """Outputs the name of labels.
+        """Returns the class labels.
         """
         
         return self._labels

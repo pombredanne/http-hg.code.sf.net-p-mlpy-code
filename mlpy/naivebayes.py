@@ -21,9 +21,6 @@ __all__ = ['GaussianNB']
 
 class GaussianNB:
     """Gaussian Naive Bayes' Classifier.
-    All classes have equal, diagonal covariance matrices, 
-    but variances are not equal.
-
     """
     
     def __init__(self):
@@ -74,7 +71,7 @@ class GaussianNB:
         self._model = True
 
     def labels(self):
-        """Outputs the name of labels.
+        """Returns the class labels.
         """
 
         if not self._model:
@@ -107,8 +104,8 @@ class GaussianNB:
 
     def pred_values(self, t):
         """Returns D decision values for eache test sample. 
-        D is 1 if there are two classes (g(t) = g_1(t) - g_2(t)) 
-        and it is the number of classes (g_1(t), g_2(t), ..., g_C(t)) 
+        D is 1 if there are two classes (d(t) = d_1(t) - d_2(t)) 
+        and it is the number of classes (d_1(t), d_2(t), ..., d_C(t)) 
         otherwise.
         
         :Parameters :	

@@ -42,8 +42,6 @@ Solvers:
 	.. automethod:: pred_probability(t)
 	.. automethod:: w()
 	.. automethod:: bias()
-	.. automethod:: nfeature()
-	.. automethod:: nclasses()
 	.. automethod:: labels()
 	.. automethod:: load_model(filename)
 	.. automethod:: save_model(filename)

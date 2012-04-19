@@ -169,7 +169,6 @@ cdef class LibLinear:
         """Learning method.
         
         :Parameters:
-      
             x : 2d array_like object
                 training data (N, P)
             y : 1d array_like object
@@ -202,7 +201,7 @@ cdef class LibLinear:
             
         :Returns:
             p : int or 1d numpy array
-                the predicted class(es) for t is returned.
+                the predicted class(es) for t.
         """
 
         cdef int i
@@ -234,16 +233,14 @@ cdef class LibLinear:
         """Returns D decision values. D is 1 if there are two 
         classes except multi-class svm by Crammer and Singer 
         ('mcsvm_cs'), and is the number of classes otherwise.
-        The pred() method returns the class with the highest 
-        decision value.
-                
+                        
         :Parameters:
             t : 1d (one sample) or 2d array_like object
                 test data ([M,] P)
             
         :Returns:
             decision values : 1d (D) or 2d numpy array (M, D)
-                decision values for each observation.
+                decision values for each sample.
         """
 
         cdef int i, j
@@ -297,7 +294,7 @@ cdef class LibLinear:
             
         :Returns:
             probability estimates : 1d (C) or 2d numpy array (M, C)
-                probability estimates for each observation.
+                probability estimates for each sample.
         """
 
         cdef int i, j
@@ -335,27 +332,8 @@ cdef class LibLinear:
         free(prob_estimates)
         return prob_estimates_arr
 
-
-    def nfeature(self):
-        """Returns the number of attributes.
-        """
-
-        if self.model is NULL:
-            raise ValueError("no model")
-
-        return self.model.nr_feature
-
-    def nclasses(self):
-        """Returns the number of classes.
-        """
-        
-        if self.model is NULL:
-            raise ValueError("no model")
-
-        return self.model.nr_class
-
     def labels(self):
-        """Outputs the name of labels.
+        """Returns the class labels.
         """
         
         if self.model is NULL:
@@ -395,11 +373,12 @@ cdef class LibLinear:
             return w
 
     def w(self):
-        """Returns the coefficients.
+        """Returns the slope coefficients.
         For 'mcsvm_cs' solver and for multiclass classification 
-        returns a 2d numpy array where w[i] contains the
-        coefficients of label i. For binary classification 
-        an 1d numpy array is returned.
+        returns a 2d numpy array where each
+        row contains the coefficients of label i (w_i). 
+        For binary classification an 1d numpy array 
+        (w_1 - w_2) is returned.
         """
 
         w = self._w()
@@ -410,11 +389,12 @@ cdef class LibLinear:
             return w[:, :-1]
        
     def bias(self):
-        """Returns the bias term(s).
+        """Returns the intercept.
         For 'mcsvm_cs' solver and for multiclass classification
-        returns a 1d numpy array where b[i] contains the
-        bias of label i (.labels()[i]). For binary classification 
-        a float is returned.
+        returns a 1d numpy array where each
+        element contains the coefficient of label i (bias_i). 
+        For binary classification a float (bias_1 - bias_2)
+        is returned.
         """
 
         w = self._w()

@@ -43,7 +43,7 @@ class Parzen:
         self._model = False
                 
     def learn(self, K, y):
-        """Compute alpha and b.
+        """Learning method.
 
         Parameters:
            K: 2d array_like object
@@ -93,9 +93,7 @@ class Parzen:
         self._model = True
 
     def pred_values(self, Kt):
-        """Returns the decision value g(Kt) for eache test sample.
-        The pred() method chooses self.labels()[0] if g(Kt) > 0, 
-        self.labels()[1] otherwise.
+        """Returns the decision value (d(Kt)) for eache test sample.
 
         :Parameters:	
            t : 1d (one sample) or 2d array_like object
@@ -123,7 +121,8 @@ class Parzen:
             return values.reshape(-1, 1)
 
     def pred(self, Kt):
-        """Compute the predicted response.
+        """Does classification on test vector(s) `Kt`.
+        Returns l_1 if g(Kt) > 0, l_2 otherwise.
       
         :Parameters:
            Kt : 1d or 2d array_like object
@@ -164,7 +163,7 @@ class Parzen:
         return self._b
     
     def labels(self):
-        """Outputs the name of labels.
+        """Returns the class labels.
         """
         
         if not self._model:
