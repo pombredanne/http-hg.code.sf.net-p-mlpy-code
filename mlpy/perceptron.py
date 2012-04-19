@@ -86,7 +86,7 @@ class Perceptron:
         :Parameters:
            x : 2d array_like object
               training data (N, P)
-           y : 1d array_like object integer (only two classes)
+           y : 1d array_like object integer
               target values (N)
         """
 
