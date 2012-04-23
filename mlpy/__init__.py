@@ -48,6 +48,8 @@ from rfe import *
 from golub import *
 from pls import *
 from naivebayes import *
+from svm import *
+from lr import *
 
 import crossval
 import hcluster
@@ -69,6 +71,8 @@ import rfe
 import golub
 import pls
 import naivebayes
+import svm
+import lr
 
 # visible submodules
 import wavelet
@@ -95,6 +99,8 @@ __all__ += rfe.__all__
 __all__ += golub.__all__
 __all__ += pls.__all__
 __all__ += naivebayes.__all__
+__all__ += svm.__all__
+__all__ += lr.__all__
 
 __all__ += ['LibLinear']
 __all__ += ['LibSvm']

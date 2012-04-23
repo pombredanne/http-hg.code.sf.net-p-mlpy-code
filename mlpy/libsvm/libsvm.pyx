@@ -20,12 +20,13 @@ cimport numpy as np
 from libc.stdlib cimport *
 
 from clibsvm cimport *
-
+cimport cython
    
 cdef void print_null(char *s):
    pass
 
 # array 1D to svm node
+@cython.boundscheck(False)
 cdef svm_node *array1d_to_node(np.ndarray[np.float64_t, ndim=1] x):
     cdef int i, k
     cdef np.ndarray[np.int_t, ndim=1] nz
@@ -44,6 +45,7 @@ cdef svm_node *array1d_to_node(np.ndarray[np.float64_t, ndim=1] x):
     return ret
 
 # array 2D to svm node
+@cython.boundscheck(False)
 cdef svm_node **array2d_to_node(np.ndarray[np.float64_t, ndim=2] x):
     cdef int i
     cdef svm_node **ret
@@ -57,6 +59,7 @@ cdef svm_node **array2d_to_node(np.ndarray[np.float64_t, ndim=2] x):
     return ret
 
 # array 1D to vector
+@cython.boundscheck(False)
 cdef double *array1d_to_vector(np.ndarray[np.float64_t, ndim=1] y):
      cdef int i
      cdef double *ret
@@ -232,6 +235,7 @@ cdef class LibSvm:
         self._free_model()       
         self.model = svm_train(&self.problem, &self.parameter)
         
+    @cython.boundscheck(False)
     def pred(self, t):
         """Does classification or regression on test vector(s) t.
                 
@@ -269,7 +273,8 @@ cdef class LibSvm:
                 free(test_node)
 
         return p
-
+    
+    @cython.boundscheck(False)
     def pred_values(self, t):
         """Returns D decision values for eache test sample. 
         For a classification model with C classes, this method
@@ -395,7 +400,6 @@ cdef class LibSvm:
         free(prob_estimates)
         return prob_estimates_arr
    
-
     def labels(self):
         """For a classification model, this method outputs class
         labels. For regression and one-class models, this method
@@ -434,7 +438,7 @@ cdef class LibSvm:
 
         nsv = {}
 
-        if self.model.nSV is not NULL:            
+        if self.model.nSV is not NULL:
             for i in range(self.model.nr_class):
                 nsv[self.model.label[i]] = self.model.nSV[i]
             

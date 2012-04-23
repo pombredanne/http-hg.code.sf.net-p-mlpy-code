@@ -292,7 +292,8 @@ array([ 1., -1.])
 Logistic Regression
 -------------------
 
-See :doc:`liblinear`
+.. autoclass:: LogisticRegression
+   :members:
 
 
 Golub Classifier
@@ -340,10 +341,12 @@ Example:
 
 .. image:: images/parzen.png
 
-Linear Support Vector Classification (Linear SVM)
+Linear Support Vector Classification (Linear SVC)
 -------------------------------------------------
 
-See :doc:`liblinear`
+.. autoclass:: LinearSVC
+   :members:
+
 
 Kernel Support Vector Classification (Kernel SVM)
 -------------------------------------------------
