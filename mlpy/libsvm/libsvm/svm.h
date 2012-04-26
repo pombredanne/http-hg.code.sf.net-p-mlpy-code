@@ -68,6 +68,8 @@ struct svm_model
 	/* XXX */
 	int free_sv;		/* 1 if svm_model is created by svm_load_model*/
 				/* 0 if svm_model is created by svm_train */
+        int *sv_idx; // mlpy (SV indexes)
+  
 };
 
 struct svm_model *svm_train(const struct svm_problem *prob, const struct svm_parameter *param);

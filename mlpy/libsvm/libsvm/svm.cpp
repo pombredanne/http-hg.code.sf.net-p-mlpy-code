@@ -2107,12 +2107,14 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
 		model->l = nSV;
 		model->SV = Malloc(svm_node *,nSV);
 		model->sv_coef[0] = Malloc(double,nSV);
+		model->sv_idx = Malloc(int, nSV); // mlpy
 		int j = 0;
 		for(i=0;i<prob->l;i++)
 			if(fabs(f.alpha[i]) > 0)
 			{
 				model->SV[j] = prob->x[i];
 				model->sv_coef[0][j] = f.alpha[i];
+				model->sv_idx[j] = i;
 				++j;
 			}		
 
@@ -2254,9 +2256,15 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
 
 		model->l = total_sv;
 		model->SV = Malloc(svm_node *,total_sv);
+		model->sv_idx = Malloc(int, total_sv); // mlpy
 		p = 0;
 		for(i=0;i<l;i++)
-			if(nonzero[i]) model->SV[p++] = x[i];
+		    if(nonzero[i]) 
+		      {
+			model->SV[p] = x[i];
+			model->sv_idx[p] = perm[i]; // mlpy
+			++p;
+		      }
 
 		int *nz_start = Malloc(int,nr_class);
 		nz_start[0] = 0;
@@ -2956,6 +2964,9 @@ void svm_free_model_content(svm_model* model_ptr)
 
 	free(model_ptr->nSV);
 	model_ptr->nSV = NULL;
+
+	free(model_ptr->sv_idx); // mlpy
+	model_ptr->sv_idx = NULL; // mlpy
 }
 
 void svm_free_and_destroy_model(svm_model** model_ptr_ptr)

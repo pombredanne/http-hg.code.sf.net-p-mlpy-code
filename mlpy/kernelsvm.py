@@ -174,16 +174,8 @@ class LibSvm:
 
         return self._libsvm.labels()
 
-    def nsv(self):
-        """Get the total number of support vectors.
+    def sv_idx(self):
+        """Returns the support vector indexes.
         """
         
-        return self._libsvm.nsv()
-
-    def label_nsv(self):
-        """Return a dictionary containing the number 
-        of support vectors for each class (for classification).
-        """
-        
-        return self._libsvm.label_nsv()
-        
+        return self._libsvm.sv_idx()

@@ -30,7 +30,7 @@ cdef void print_null(char *s):
 
 # array 1D to svm node
 @cython.boundscheck(False)
-cdef svm_node *array1d_to_node(np.ndarray[np.float64_t, ndim=1] x, serial=None):
+cdef svm_node *array1d_to_node(np.ndarray[np.float_t, ndim=1] x, serial=None):
     cdef int i
     cdef svm_node *ret
 
@@ -48,7 +48,7 @@ cdef svm_node *array1d_to_node(np.ndarray[np.float64_t, ndim=1] x, serial=None):
 
 # array 2D to svm node
 @cython.boundscheck(False)
-cdef svm_node **array2d_to_node(np.ndarray[np.float64_t, ndim=2] x):
+cdef svm_node **array2d_to_node(np.ndarray[np.float_t, ndim=2] x):
     cdef int i
     cdef svm_node **ret
 
@@ -60,7 +60,7 @@ cdef svm_node **array2d_to_node(np.ndarray[np.float64_t, ndim=2] x):
     return ret
 
 @cython.boundscheck(False)
-cdef double *array1d_to_vector(np.ndarray[np.float64_t, ndim=1] y):
+cdef double *array1d_to_vector(np.ndarray[np.float_t, ndim=1] y):
     cdef int i
     cdef double *ret
 
@@ -155,8 +155,8 @@ cdef class LibSvmBase:
         """Convert the data into libsvm svm_problem struct
         """
 
-        Karr = np.ascontiguousarray(K, dtype=np.float64)
-        yarr = np.ascontiguousarray(y, dtype=np.float64)
+        Karr = np.ascontiguousarray(K, dtype=np.float)
+        yarr = np.ascontiguousarray(y, dtype=np.float)
         
         if Karr.ndim != 2:
             raise ValueError("K must be a 2d array_like object")
@@ -221,7 +221,7 @@ cdef class LibSvmBase:
         cdef int i
         cdef svm_node *test_node
 
-        Ktarr = np.ascontiguousarray(Kt, dtype=np.float64)
+        Ktarr = np.ascontiguousarray(Kt, dtype=np.float)
 
         if Ktarr.ndim > 2:
             raise ValueError("Kt must be an 1d or a 2d array_like object")
@@ -239,7 +239,7 @@ cdef class LibSvmBase:
             else:
                 return p
         else:
-            p = np.empty(Ktarr.shape[0], dtype=np.float64)
+            p = np.empty(Ktarr.shape[0], dtype=np.float)
             for i in range(Ktarr.shape[0]):
                 test_node = array1d_to_node(Ktarr[i])
                 p[i] = svm_predict(self.model, test_node)
@@ -279,7 +279,7 @@ cdef class LibSvmBase:
         cdef svm_node *test_node
         cdef double *dec_values
 
-        Ktarr = np.ascontiguousarray(Kt, dtype=np.float64)
+        Ktarr = np.ascontiguousarray(Kt, dtype=np.float)
 
         if Ktarr.ndim > 2:
             raise ValueError("Kt must be an 1d or a 2d array_like object")
@@ -335,7 +335,7 @@ cdef class LibSvmBase:
         cdef svm_node *test_node
         cdef double *prob_estimates
 
-        Ktarr = np.ascontiguousarray(Kt, dtype=np.float64)
+        Ktarr = np.ascontiguousarray(Kt, dtype=np.float)
 
         if Ktarr.ndim > 2:
             raise ValueError("Kt must be an 1d or a 2d array_like object")
@@ -386,43 +386,35 @@ cdef class LibSvmBase:
         returns None.
         """
         
+        cdef int i
+
         if self.model is NULL:
             raise ValueError("no model computed")
 
         if self.model.label is NULL:
-            return None
+            ret = None
         else:
-            ret = np.empty(self.model.nr_class, dtype=np.int32)
+            ret = np.empty(self.model.nr_class, dtype=np.int)
             for i in range(self.model.nr_class):
                 ret[i] = self.model.label[i]
-            return ret.astype(np.int)
+            
+        return ret
 
-    def nsv(self):
-        """Get the total number of support vectors.
+    @cython.boundscheck(False)
+    def sv_idx(self):
+        """Returns the support vector indexes.
         """
         
-        if self.model is NULL:
-            raise ValueError("no model computed")
-
-        return self.model.l
-
-    def label_nsv(self):
-        """Return a dictionary containing the number 
-        of support vectors for each class (for classification).
-        """
-
         cdef int i
         
         if self.model is NULL:
             raise ValueError("no model computed")
-
-        nsv = {}
-
-        if self.model.nSV is not NULL:
-            for i in range(self.model.nr_class):
-                nsv[self.model.label[i]] = self.model.nSV[i]
-            
-        return nsv
+        
+        ret = np.empty(self.model.l, dtype=np.int)
+        for i in range(self.model.l):
+            ret[i] = self.model.sv_idx[i]
+        
+        return ret
     
     cdef void _free_problem(self):
         cdef int i

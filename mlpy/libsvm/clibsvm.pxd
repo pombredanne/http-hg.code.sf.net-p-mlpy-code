@@ -49,6 +49,8 @@ cdef extern from "libsvm/svm.h":
         int free_sv  # 1 if svm_model is created by svm_load_model
                      # 0 if svm_model is created by svm_train
 
+        int *sv_idx # only in mlpy
+
     void svm_set_print_string_function(void (*print_func)(char *))
         
     svm_model *svm_train(svm_problem *prob, svm_parameter *param)
@@ -58,7 +60,7 @@ cdef extern from "libsvm/svm.h":
         svm_node *x, double* prob_estimates)
     double svm_predict_values(svm_model *model, 
         svm_node *x, double* dec_values)
-    
+        
     void svm_free_and_destroy_model(svm_model **model_ptr_ptr)
     void svm_destroy_param(svm_parameter* param)
     
