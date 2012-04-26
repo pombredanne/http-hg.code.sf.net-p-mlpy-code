@@ -14,7 +14,7 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = ['LibSvm']
+__all__ = ['LibSvm', 'CSVC', 'NuSVC', 'OneClassSVM', 'EpsilonSVR', 'NuSVR']
 
 import sys
 if sys.version >= '3':
@@ -26,11 +26,13 @@ import numpy as np
 from kernel_class import *
 
 class LibSvm:
+    """LIBSVM interface.
+    """
+
     def __init__(self, svm_type='c_svc', C=1, nu=0.5, eps=0.001,
                  p=0.1, shrinking=True, probability=False, weight={},
                  kernel=None):
-        """LibSvm.
-        
+        """        
         :Parameters:
            svm_type : string
                SVM type, can be one of: 'c_svc', 'nu_svc', 
@@ -82,7 +84,7 @@ class LibSvm:
            K: 2d array_like object
               precomputed training kernel matrix (if kernel=None);
               training data in input space (if kernel is a Kernel object)
-           y : 1d array_like object integer (N)
+           y : 1d array_like object (N)
               target values (N)
         """
 
@@ -173,6 +175,417 @@ class LibSvm:
         """
 
         return self._libsvm.labels()
+
+    def sv_idx(self):
+        """Returns the support vector indexes.
+        """
+        
+        return self._libsvm.sv_idx()
+
+
+class CSVC:
+    """C-Support Vector Classification.
+    """
+    def __init__(self, C=1, eps=0.001, shrinking=True, probability=False, 
+                 weight={}, kernel=None):
+        """ 
+        :Parameters:           
+           C : float
+               cost of constraints violation
+           eps : float
+               stopping criterion
+           shrinking : bool
+               use the shrinking heuristics
+           probability : bool
+               predict probability estimates
+           weight : dict 
+               changes the penalty for some classes (if the weight for a
+               class is not changed, it is set to 1). For example, to
+               change penalty for classes 1 and 2 to 0.5 and 0.8
+               respectively set weight={1:0.5, 2:0.8}
+           kernel : None or mlpy.Kernel object.
+               if kernel is None, K and Kt in .learn()
+               and in .pred*() methods must be precomputed kernel 
+               matricies, else K and Kt must be training (resp. 
+               test) data in input space.
+        """
+        
+        self._libsvm = LibSvm(svm_type='c_svc', C=C, eps=eps, 
+            shrinking=shrinking, probability=probability,
+            weight=weight, kernel=kernel)
+    
+    def learn(self, K, y):
+        """Learning method.
+      
+        :Parameters:
+           K: 2d array_like object
+              precomputed training kernel matrix (if kernel=None);
+              training data in input space (if kernel is a Kernel object)
+           y : 1d array_like object integer (N)
+              target values (N)
+        """
+
+        self._libsvm.learn(K, y)
+
+    def pred(self, Kt):
+        """Does classification on test vector(s) Kt.
+                
+        :Parameters:
+            Kt : 1d or 2d array_like object
+               precomputed test kernel matrix. (if kernel=None);
+               test data in input space (if kernel is a Kernel object).
+
+        :Returns:
+            p : integer or 1d numpy array integer
+               predicted class(es)
+        """
+            
+        return self._libsvm.pred(Kt)
+
+    def pred_values(self, Kt):
+        """Returns D decision values for each test sample. 
+        For a classification model with C classes, this method
+        returns D=C*(C-1)/2 decision values for each test sample. 
+        The order is l[0] vs. l[1], ..., l[0] vs. l[C-1], l[1] vs. 
+        l[2], ..., l[C-2] vs. l[C-1], where l can be obtained 
+        from the labels() method.
+                
+        :Parameters:
+             Kt : 1d or 2d array_like object
+              precomputed test kernel matrix. (if kernel=None);
+              test data in input space (if kernel is a Kernel object).
+
+        :Returns:
+            decision values : 1d (D) or 2d numpy array (M, D)
+                decision values for each observation.
+        """
+                
+        return self._libsvm.pred_values(Kt)
+    
+    def pred_probability(self, Kt):
+        """Returns C (number of classes) probability estimates.
+        For a classification models with probability information, 
+        this method computes C (number of classes) probability 
+        estimates.
+
+        :Parameters:
+            Kt : 1d or 2d array_like object
+              precomputed test kernel matrix. (if kernel=None);
+              test data in input space (if kernel is a Kernel object).
+        
+        :Returns:
+            probability estimates : 1d (C) or 2d numpy array (M,C)
+                probability estimates for each observation.
+        """
+            
+        return self._libsvm.pred_probability(Kt)
+
+    def labels(self):
+        """Returns the class labels.
+        """
+
+        return self._libsvm.labels()
+
+    def sv_idx(self):
+        """Returns the support vector indexes.
+        """
+        
+        return self._libsvm.sv_idx()
+
+
+class NuSVC:
+    """Nu-Support Vector Classification.
+    """
+
+    def __init__(self, nu=0.5, eps=0.00001, shrinking=True, probability=False, 
+                 weight={}, kernel=None):
+        """        
+        :Parameters:
+           nu : float (for 'nu_svc', 'one_class', 'nu_svr')
+               nu parameter
+           eps : float
+               stopping criterion
+           shrinking : bool
+               use the shrinking heuristics
+           probability : bool
+               predict probability estimates
+           weight : dict 
+               changes the penalty for some classes (if the weight for a
+               class is not changed, it is set to 1). For example, to
+               change penalty for classes 1 and 2 to 0.5 and 0.8
+               respectively set weight={1:0.5, 2:0.8}
+           kernel : None or mlpy.Kernel object.
+               if kernel is None, K and Kt in .learn()
+               and in .pred*() methods must be precomputed kernel 
+               matricies, else K and Kt must be training (resp. 
+               test) data in input space.
+        """
+        
+        self._libsvm = LibSvm(svm_type='nu_svc', nu=nu, eps=eps,
+                              shrinking=shrinking, probability=probability,
+                              weight=weight, kernel=kernel)
+            
+    def learn(self, K, y):
+        """Learning method.
+
+        :Parameters:
+           K: 2d array_like object
+              precomputed training kernel matrix (if kernel=None);
+              training data in input space (if kernel is a Kernel object)
+           y : 1d array_like object integer (N)
+              target values (N)
+        """
+            
+        self._libsvm.learn(K, y)
+
+    def pred(self, Kt):
+        """Does classification or regression on test vector(s) Kt.
+                
+        :Parameters:
+            Kt : 1d or 2d array_like object
+               precomputed test kernel matrix. (if kernel=None);
+               test data in input space (if kernel is a Kernel object).
+
+        :Returns:
+            p : integer or 1d numpy array
+               predicted class(es)
+        """
+            
+        return self._libsvm.pred(Kt)
+
+    def pred_values(self, Kt):
+        """Returns D decision values for each test sample. 
+        For a classification model with C classes, this method
+        returns D=C*(C-1)/2 decision values for each test sample. 
+        The order is l[0] vs. l[1], ..., l[0] vs. l[C-1], l[1] vs. 
+        l[2], ..., l[C-2] vs. l[C-1], where l can be obtained 
+        from the labels() method.
+                
+        :Parameters:
+             Kt : 1d or 2d array_like object
+              precomputed test kernel matrix. (if kernel=None);
+              test data in input space (if kernel is a Kernel object).
+
+        :Returns:
+            decision values : 1d (D) or 2d numpy array (M, D)
+                decision values for each observation.
+        """
+                
+        return self._libsvm.pred_values(Kt)
+    
+    def pred_probability(self, Kt):
+        """Returns C (number of classes) probability estimates.
+        For a classification models with probability information, 
+        this method computes 'number of classes' probability 
+        estimates.
+
+        :Parameters:
+            Kt : 1d or 2d array_like object
+              precomputed test kernel matrix. (if kernel=None);
+              test data in input space (if kernel is a Kernel object).
+        
+        :Returns:
+            probability estimates : 1d (C) or 2d numpy array (M,C)
+                probability estimates for each observation.
+        """
+            
+        return self._libsvm.pred_probability(Kt)
+
+    def labels(self):
+        """Returns the class labels.
+        """
+
+        return self._libsvm.labels()
+
+    def sv_idx(self):
+        """Returns the support vector indexes.
+        """
+        
+        return self._libsvm.sv_idx()
+
+
+class OneClassSVM:
+    """One-Class-Support Vector Machine.
+    """
+
+    def __init__(self, nu=0.5, eps=0.001, shrinking=True, kernel=None):
+        """        
+        :Parameters:
+           nu : float
+               nu parameter
+           eps : float
+               stopping criterion
+           shrinking : bool
+               use the shrinking heuristics
+           kernel : None or mlpy.Kernel object.
+               if kernel is None, K and Kt in .learn()
+               and in .pred*() methods must be precomputed kernel 
+               matricies, else K and Kt must be training (resp. 
+               test) data in input space.
+        """
+    
+        self._libsvm = LibSvm(svm_type='one_class', nu=nu, eps=eps, 
+            shrinking=shrinking, kernel=kernel)
+    
+    def learn(self, K):
+        """Learning method.
+
+        :Parameters:
+           K: 2d array_like object
+              precomputed training kernel matrix (if kernel=None);
+              training data in input space (if kernel is a Kernel object)
+        """
+
+        y = np.ones(K.shape[0], dtype=np.int)
+        self._libsvm.learn(K, y)
+
+    def pred(self, Kt):
+        """Does classification on test vector(s) Kt.
+                
+        :Parameters:
+            Kt : 1d or 2d array_like object
+               precomputed test kernel matrix. (if kernel=None);
+               test data in input space (if kernel is a Kernel object).
+
+        :Returns:
+            p : integer or 1d numpy array integer
+               predicted class(es) (-1: outliers)
+        """
+            
+        return self._libsvm.pred(Kt)
+
+    def pred_values(self, Kt):
+        """Returns D=1 decision value for each test sample.
+                        
+        :Parameters:
+             Kt : 1d or 2d array_like object
+              precomputed test kernel matrix. (if kernel=None);
+              test data in input space (if kernel is a Kernel object).
+
+        :Returns:
+            decision values : 1d (1) or 2d numpy array (M, 1)
+                decision values for each observation.
+        """
+                
+        return self._libsvm.pred_values(Kt)
+ 
+    def sv_idx(self):
+        """Returns the support vector indexes.
+        """
+        
+        return self._libsvm.sv_idx()
+
+
+class EpsilonSVR:
+    """Epsilon-Support Vector Regression.
+    """
+
+    def __init__(self, C=1, eps=0.001, p=0.1, shrinking=True, kernel=None):
+        """        
+        :Parameters:     
+           C : float
+               cost of constraints violation
+           eps : float
+               stopping criterion
+           p : float
+               p is the epsilon in epsilon-insensitive loss function
+           shrinking : bool
+               use the shrinking heuristics
+           kernel : None or mlpy.Kernel object.
+               if kernel is None, K and Kt in .learn()
+               and in .pred*() methods must be precomputed kernel 
+               matricies, else K and Kt must be training (resp. 
+               test) data in input space.
+        """
+    
+        self._libsvm = LibSvm(svm_type='epsilon_svr', C=C, eps=eps, 
+            p=p, shrinking=shrinking, kernel=kernel)
+    
+    def learn(self, K, y):
+        """
+        :Parameters:
+           K: 2d array_like object
+              precomputed training kernel matrix (if kernel=None);
+              training data in input space (if kernel is a Kernel object)
+           y : 1d array_like object float(N)
+              target values (N)
+        """
+            
+        self._libsvm.learn(K, y)
+
+    def pred(self, Kt):
+        """Does regression on test vector(s) Kt.
+                
+        :Parameters:
+            Kt : 1d or 2d array_like object
+               precomputed test kernel matrix. (if kernel=None);
+               test data in input space (if kernel is a Kernel object).
+
+        :Returns:
+            p : float or 1d numpy array
+               predicted response(s)
+        """
+            
+        return self._libsvm.pred(Kt)
+
+    def sv_idx(self):
+        """Returns the support vector indexes.
+        """
+        
+        return self._libsvm.sv_idx()
+
+
+class NuSVR:
+    """Nu-Support Vector Regression.
+    """
+
+    def __init__(self, C=1, nu=0.5, eps=0.001, shrinking=True, kernel=None):
+        """        
+        :Parameters:     
+           C : float
+               cost of constraints violation
+           nu : float
+               nu parameter
+           eps : float
+               stopping criterion
+           shrinking : bool
+               use the shrinking heuristics
+           kernel : None or mlpy.Kernel object.
+               if kernel is None, K and Kt in .learn()
+               and in .pred*() methods must be precomputed kernel 
+               matricies, else K and Kt must be training (resp. 
+               test) data in input space.
+        """
+    
+        self._libsvm = LibSvm(C=C, nu=nu, eps=eps, shrinking=shrinking,
+                              kernel=kernel)
+                                  
+    def learn(self, K, y):
+        """
+        :Parameters:
+           K: 2d array_like object
+              precomputed training kernel matrix (if kernel=None);
+              training data in input space (if kernel is a Kernel object)
+           y : 1d array_like object float(N)
+              target values (N)
+        """
+            
+        self._libsvm.learn(K, y)
+
+    def pred(self, Kt):
+        """Does regression on test vector(s) Kt.
+                
+        :Parameters:
+            Kt : 1d or 2d array_like object
+               precomputed test kernel matrix. (if kernel=None);
+               test data in input space (if kernel is a Kernel object).
+
+        :Returns:
+            p : float or 1d numpy array
+               predicted response(s)
+        """
+            
+        return self._libsvm.pred(Kt)
 
     def sv_idx(self):
         """Returns the support vector indexes.

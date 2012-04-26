@@ -341,15 +341,9 @@ Example:
 
 .. image:: images/parzen.png
 
-Linear Support Vector Classification (Linear SVC)
--------------------------------------------------
 
-.. autoclass:: LinearSVC
-   :members:
-
-
-Kernel Support Vector Classification (Kernel SVM)
--------------------------------------------------
+Support Vector Classification
+-----------------------------
 
 See :doc:`svm`
 

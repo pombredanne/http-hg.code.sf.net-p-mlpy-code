@@ -104,7 +104,7 @@ class PLS:
               test data
 
         :Returns:
-           p : integer or 1d numpy darray
+           p : 
               predicted response(s)
         """
 

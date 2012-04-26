@@ -3,6 +3,45 @@
 Support Vector Machines (SVMs)
 ==============================
 
+Linear Support Vector Classification (Linear SVC)
+-------------------------------------------------
+
+.. autoclass:: LinearSVC
+   :members:
+
+C-Support Vector Classification
+-------------------------------
+
+.. autoclass:: CSVC
+   :members:
+
+Nu-Support Vector Classification
+--------------------------------
+
+.. autoclass:: NuSVC
+   :members:
+
+
+One-Class-Support Vector Machines
+---------------------------------
+
+.. autoclass:: OneClassSVM
+   :members:
+
+
+Epsilon-Support Vector Regression
+---------------------------------
+
+.. autoclass:: EpsilonSVR
+   :members:
+
+Nu-Support Vector Regression
+---------------------------------
+
+.. autoclass:: NuSVR
+   :members:
+
+
 Support Vector Machines from [LIBSVM]_
 --------------------------------------
 
