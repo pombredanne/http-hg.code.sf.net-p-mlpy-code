@@ -21,27 +21,29 @@ from libc.stdlib cimport *
 
 from clibsvm cimport *
 cimport cython
+
+from kernel_class import *
    
 cdef void print_null(char *s):
    pass
 
+
 # array 1D to svm node
 @cython.boundscheck(False)
-cdef svm_node *array1d_to_node(np.ndarray[np.float64_t, ndim=1] x):
-    cdef int i, k
-    cdef np.ndarray[np.int_t, ndim=1] nz
+cdef svm_node *array1d_to_node(np.ndarray[np.float64_t, ndim=1] x, serial=None):
+    cdef int i
     cdef svm_node *ret
 
-    nz = np.nonzero(x)[0]
-    ret = <svm_node*> malloc ((nz.shape[0]+1) * sizeof(svm_node))
+    ret = <svm_node*> malloc ((x.shape[0]+2) * sizeof(svm_node))
             
-    k = 0
-    for i in nz:
-        ret[k].index = i+1
-        ret[k].value = x[i]
-        k += 1
-    ret[nz.shape[0]].index = -1
-            
+    ret[0].index = 0
+    if serial is not None:
+        ret[0].value = serial
+    for i in range(1, x.shape[0]+1):
+        ret[i].index = i
+        ret[i].value = x[i-1]
+    ret[x.shape[0]+1].index = -1
+
     return ret
 
 # array 2D to svm node
@@ -50,73 +52,45 @@ cdef svm_node **array2d_to_node(np.ndarray[np.float64_t, ndim=2] x):
     cdef int i
     cdef svm_node **ret
 
-    ret = <svm_node **> malloc \
-        (x.shape[0] * sizeof(svm_node *))
+    ret = <svm_node **> malloc (x.shape[0] * sizeof(svm_node *))
     
     for i in range(x.shape[0]):
-        ret[i] = array1d_to_node(x[i])
+        ret[i] = array1d_to_node(x[i], i+1)
             
     return ret
 
-# array 1D to vector
 @cython.boundscheck(False)
 cdef double *array1d_to_vector(np.ndarray[np.float64_t, ndim=1] y):
-     cdef int i
-     cdef double *ret
+    cdef int i
+    cdef double *ret
 
-     ret = <double *> malloc (y.shape[0] * sizeof(double))
+    ret = <double *> malloc (y.shape[0] * sizeof(double))
+    
+    for i in range(y.shape[0]):
+        ret[i] = y[i]
 
-     for i in range(y.shape[0]):
-         ret[i] = y[i]
-
-     return ret
+    return ret
 
 
-cdef class LibSvm:
+cdef class LibSvmBase:
     cdef svm_problem problem
     cdef svm_parameter parameter
-    cdef svm_model *model 
-        
-    cdef int learn_disabled
-
+    cdef svm_model *model
+  
     SVM_TYPE = ['c_svc',
                 'nu_svc',
                 'one_class',
                 'epsilon_svr',
                 'nu_svr']
 
-    KERNEL_TYPE = ['linear',
-                   'poly',
-                   'rbf',
-                   'sigmoid']
-
-    def __cinit__(self, svm_type='c_svc', kernel_type='linear', 
-                  degree=3, gamma=0.001, coef0=0, C=1, nu=0.5,
-                  eps=0.001, p=0.1, cache_size=100, shrinking=True,
-                  probability=False, weight={}):
+    def __cinit__(self, svm_type='c_svc', C=1, nu=0.5, eps=0.001,
+                  p=0.1, shrinking=True, probability=False, weight={}):
         """LibSvm.
         
         :Parameters:
-
             svm_type : string
                 SVM type, can be one of: 'c_svc', 'nu_svc', 
-                'one_class', 'epsilon_svr', 'nu_svr'. The method load_model()
-                can overwrite this parameter 
-            kernel_type : string
-                kernel type, can be one of: 'linear' (u'*v),
-                'poly' ((gamma*u'*v + coef0)^degree), 'rbf' 
-                (exp(-gamma*|u-v|^2)), 'sigmoid'
-                (tanh(gamma*u'*v + coef0)). The method load_model()
-                can overwrite this parameter
-            degree : int (for 'poly' kernel_type)
-                degree in kernel. The method load_model()
-                can overwrite this parameter
-            gamma : float (for 'poly', 'rbf', 'sigmoid' kernel_type)
-                gamma in kernel (e.g. 1 / number of features).
-                The method load_model() can overwrite this parameter
-            coef0 : float (for 'poly', 'sigmoid' kernel_type)
-                coef0 in kernel. The method load_model()
-                can overwrite this parameter
+                'one_class', 'epsilon_svr', 'nu_svr'.             
             C : float (for 'c_svc', 'epsilon_svr', 'nu_svr')
                 cost of constraints violation
             nu : float (for 'nu_svc', 'one_class', 'nu_svr')
@@ -127,8 +101,6 @@ cdef class LibSvm:
             p : float (for 'epsilon_svr')
                 p is the epsilon in epsilon-insensitive loss function
                 of epsilon-SVM regression
-            cache_size : float [MB]
-                size of the kernel cache, specified in megabytes
             shrinking : bool
                 use the shrinking heuristics
             probability : bool
@@ -141,26 +113,21 @@ cdef class LibSvm:
         """
         
         svm_set_print_string_function(&print_null)
-        self.learn_disabled = 0
 
         try:
             self.parameter.svm_type = self.SVM_TYPE.index(svm_type)
         except ValueError:
             raise ValueError("invalid svm_type")
-	
-        try:
-            self.parameter.kernel_type = self.KERNEL_TYPE.index(kernel_type)
-        except ValueError:
-            raise ValueError("invalid kernel_type")
-	
-        self.parameter.degree = degree
-        self.parameter.gamma = gamma
-        self.parameter.coef0 = coef0
+	        
+        self.parameter.kernel_type = 4 # precomputed kernel
+        self.parameter.degree = 3 # unused
+        self.parameter.gamma = 0.001 # unused
+        self.parameter.coef0 = 0 # unused
         self.parameter.C = C
         self.parameter.nu = nu
         self.parameter.eps = eps
         self.parameter.p = p
-        self.parameter.cache_size = cache_size
+        self.parameter.cache_size = 100 # unused
         self.parameter.shrinking = int(shrinking)
         self.parameter.probability = int(probability)
 	
@@ -184,27 +151,30 @@ cdef class LibSvm:
         self._free_model()
         self._free_param()
 
-    def _load_problem(self, x, y):
+    def _load_problem(self, K, y):
         """Convert the data into libsvm svm_problem struct
         """
 
-        xarr = np.ascontiguousarray(x, dtype=np.float64)
+        Karr = np.ascontiguousarray(K, dtype=np.float64)
         yarr = np.ascontiguousarray(y, dtype=np.float64)
         
-        if xarr.ndim != 2:
-            raise ValueError("x must be a 2d array_like object")
+        if Karr.ndim != 2:
+            raise ValueError("K must be a 2d array_like object")
+
+        if Karr.shape[0] != Karr.shape[1]:
+            raise ValueError("K must be a square matrix")
 
         if yarr.ndim != 1:
             raise ValueError("y must be an 1d array_like object")
 
-        if xarr.shape[0] != yarr.shape[0]:
-            raise ValueError("x, y: shape mismatch")
+        if Karr.shape[0] != yarr.shape[0]:
+            raise ValueError("K, y: shape mismatch")
         
-        self.problem.x = array2d_to_node(xarr)
+        self.problem.x = array2d_to_node(Karr)
         self.problem.y = array1d_to_vector(yarr)
-        self.problem.l = xarr.shape[0]
+        self.problem.l = Karr.shape[0]
                 
-    def learn(self, x, y):
+    def learn(self, K, y):
         """Learning method.
         For classification, y is an integer indicating the class label
         (multi-class is supported). For regression, y is the target
@@ -212,8 +182,8 @@ cdef class LibSvm:
         so can be any number.
         
         :Parameters:
-            x : 2d array_like object
-                training data (N, P)
+            K : 2d array_like object
+                training data in feature space (N, N)
             y : 1d array_like object
                 target values (N)
         """
@@ -221,12 +191,9 @@ cdef class LibSvm:
         cdef char *ret
 
         srand(1)
-
-        if self.learn_disabled:
-            raise ValueError("learn method is disabled (model from file)")
         
         self._free_problem()
-        self._load_problem(x, y)
+        self._load_problem(K, y)
         ret = svm_check_parameter(&self.problem, &self.parameter)
 	
         if ret != NULL:
@@ -236,16 +203,17 @@ cdef class LibSvm:
         self.model = svm_train(&self.problem, &self.parameter)
         
     @cython.boundscheck(False)
-    def pred(self, t):
-        """Does classification or regression on test vector(s) t.
+    def pred(self, Kt):
+        """Does classification or regression on test vector(s) Kt.
                 
         :Parameters:
-            t : 1d (one sample) or 2d array_like object
-                test data ([M,] P)
+            Kt : 1d (one sample) or 2d array_like object ([M], N)
+            precomputed test kernel matrix: precomputed inner products 
+            (in feature space) between M testing and N training points.
             
         :Returns:
-            p : for a classification model, the predicted class(es) for t is
-                returned. For a regression model, the function value(s) of t
+            p : for a classification model, the predicted class(es) for Kt is
+                returned. For a regression model, the function value(s) of Kt
                 calculated using the model is returned. For an one-class
                 model, +1 or -1 is returned.
         """
@@ -253,30 +221,39 @@ cdef class LibSvm:
         cdef int i
         cdef svm_node *test_node
 
-        tarr = np.ascontiguousarray(t, dtype=np.float64)
+        Ktarr = np.ascontiguousarray(Kt, dtype=np.float64)
 
-        if tarr.ndim > 2:
-            raise ValueError("t must be an 1d or a 2d array_like object")
+        if Ktarr.ndim > 2:
+            raise ValueError("Kt must be an 1d or a 2d array_like object")
         
         if self.model is NULL:
             raise ValueError("no model computed")
 
-        if tarr.ndim == 1:
-            test_node = array1d_to_node(tarr)
+        if Ktarr.ndim == 1:
+            test_node = array1d_to_node(Ktarr)
             p = svm_predict(self.model, test_node)
             free(test_node)
+            if self.SVM_TYPE[self.parameter.svm_type] in \
+                    ['c_svc', 'nu_svc', 'one_class']:
+                return int(p)
+            else:
+                return p
         else:
-            p = np.empty(tarr.shape[0], dtype=np.float64)
-            for i in range(tarr.shape[0]):
-                test_node = array1d_to_node(tarr[i])
+            p = np.empty(Ktarr.shape[0], dtype=np.float64)
+            for i in range(Ktarr.shape[0]):
+                test_node = array1d_to_node(Ktarr[i])
                 p[i] = svm_predict(self.model, test_node)
                 free(test_node)
-
-        return p
+        
+            if self.SVM_TYPE[self.parameter.svm_type] in \
+                    ['c_svc', 'nu_svc', 'one_class']:
+                return p.astype(np.int)
+            else:       
+                return p
     
     @cython.boundscheck(False)
-    def pred_values(self, t):
-        """Returns D decision values for eache test sample. 
+    def pred_values(self, Kt):
+        """Returns D decision values for each test sample. 
         For a classification model with C classes, this method
         returns D=C*(C-1)/2 decision values for each test sample. 
         The order is l[0] vs. l[1], ..., l[0] vs. l[C-1], l[1] vs. 
@@ -290,9 +267,9 @@ cdef class LibSvm:
         value as in pred().
                 
         :Parameters:
-            t : 1d (one sample) or 2d array_like object
-                test data ([M,] P)
-            
+            Kt : 1d (one sample) or 2d array_like object ([M], N)
+               precomputed test kernel matrix: precomputed inner products 
+               (in feature space) between M testing and N training points.          
         :Returns:
             decision values : 1d (D) or 2d numpy array (M, D)
                 decision values for each observation.
@@ -302,33 +279,33 @@ cdef class LibSvm:
         cdef svm_node *test_node
         cdef double *dec_values
 
-        tarr = np.ascontiguousarray(t, dtype=np.float64)
+        Ktarr = np.ascontiguousarray(Kt, dtype=np.float64)
 
-        if tarr.ndim > 2:
-            raise ValueError("t must be an 1d or a 2d array_like object")
+        if Ktarr.ndim > 2:
+            raise ValueError("Kt must be an 1d or a 2d array_like object")
         
         if self.model is NULL:
             raise ValueError("no model computed")
 
         if self.SVM_TYPE[self.parameter.svm_type] == 'c_svc' or \
                 self.SVM_TYPE[self.parameter.svm_type] == 'nu_svc':
-            n = self.model.nr_class*(self.model.nr_class - 1) / 2 
+            n = self.model.nr_class*(self.model.nr_class - 1) / 2
         else:
             n = 1
 
         dec_values = <double *> malloc (n * sizeof(double))
         
-        if tarr.ndim == 1:
+        if Ktarr.ndim == 1:
             dec_values_arr = np.empty(n, dtype=np.float)
-            test_node = array1d_to_node(tarr)
+            test_node = array1d_to_node(Ktarr)
             p = svm_predict_values(self.model, test_node, dec_values)
             free(test_node)
             for j in range(n):
                 dec_values_arr[j] = dec_values[j]
         else:
-            dec_values_arr = np.empty((tarr.shape[0], n), dtype=np.float)
-            for i in range(tarr.shape[0]):
-                test_node = array1d_to_node(tarr[i])
+            dec_values_arr = np.empty((Ktarr.shape[0], n), dtype=np.float)
+            for i in range(Ktarr.shape[0]):
+                test_node = array1d_to_node(Ktarr[i])
                 p = svm_predict_values(self.model, test_node, dec_values)
                 free(test_node)
                 for j in range(n):
@@ -337,15 +314,17 @@ cdef class LibSvm:
         free(dec_values)
         return dec_values_arr
 
-    def pred_probability(self, t):
+    @cython.boundscheck(False)
+    def pred_probability(self, Kt):
         """Returns C (number of classes) probability estimates.
         For a 'c_svc' and 'nu_svc' classification models with probability 
         information, this method computes 'number of classes' probability 
         estimates.
 
         :Parameters:
-            t : 1d (one sample) or 2d array_like object
-                test data ([M,] P)
+            Kt : 1d (one sample) or 2d array_like object ([M], N)
+               precomputed test kernel matrix: precomputed inner products 
+               (in feature space) between M testing and N training points.
             
         :Returns:
             probability estimates : 1d (C) or 2d numpy array (M,C)
@@ -356,10 +335,10 @@ cdef class LibSvm:
         cdef svm_node *test_node
         cdef double *prob_estimates
 
-        tarr = np.ascontiguousarray(t, dtype=np.float64)
+        Ktarr = np.ascontiguousarray(Kt, dtype=np.float64)
 
-        if tarr.ndim > 2:
-            raise ValueError("t must be an 1d or a 2d array_like object")
+        if Ktarr.ndim > 2:
+            raise ValueError("Kt must be an 1d or a 2d array_like object")
         
         if self.model is NULL:
             raise ValueError("no model computed")
@@ -378,19 +357,19 @@ cdef class LibSvm:
         prob_estimates = <double*> malloc (self.model.nr_class * 
                                            sizeof(double))
         
-        if tarr.ndim == 1:
+        if Ktarr.ndim == 1:
             prob_estimates_arr = np.empty(self.model.nr_class, dtype=np.float)
-            test_node = array1d_to_node(tarr)
+            test_node = array1d_to_node(Ktarr)
             p = svm_predict_probability(self.model, test_node,
                 prob_estimates)
             free(test_node)
             for j in range(self.model.nr_class):
                 prob_estimates_arr[j] = prob_estimates[j]
         else:
-            prob_estimates_arr = np.empty((tarr.shape[0], self.model.nr_class), 
+            prob_estimates_arr = np.empty((Ktarr.shape[0], self.model.nr_class), 
                                           dtype=np.float)
-            for i in range(tarr.shape[0]):
-                test_node = array1d_to_node(tarr[i])
+            for i in range(Ktarr.shape[0]):
+                test_node = array1d_to_node(Ktarr[i])
                 p = svm_predict_probability(self.model, test_node,
                                             prob_estimates)
                 free(test_node)
@@ -400,6 +379,7 @@ cdef class LibSvm:
         free(prob_estimates)
         return prob_estimates_arr
    
+    @cython.boundscheck(False)
     def labels(self):
         """For a classification model, this method outputs class
         labels. For regression and one-class models, this method
@@ -415,7 +395,7 @@ cdef class LibSvm:
             ret = np.empty(self.model.nr_class, dtype=np.int32)
             for i in range(self.model.nr_class):
                 ret[i] = self.model.label[i]
-            return ret
+            return ret.astype(np.int)
 
     def nsv(self):
         """Get the total number of support vectors.
@@ -460,42 +440,3 @@ cdef class LibSvm:
 
     cdef void _free_param(self):
         svm_destroy_param(&self.parameter)
-    
-    @classmethod
-    def load_model(cls, filename):
-        """Loads model from file. Returns a LibSvm object
-        with the learn() method disabled.
-        """
-        
-        ret = LibSvm()
-
-        try:
-            ret.model = svm_load_model(filename)
-        except:
-            raise ValueError("invalid filename")
-        else:
-            if ret.model is NULL:
-                raise IOError("model file could not be loaded")
-            
-        ret.parameter.svm_type = ret.model.param.svm_type
-        ret.parameter.kernel_type = ret.model.param.kernel_type
-        ret.parameter.degree = ret.model.param.degree
-        ret.parameter.gamma = ret.model.param.gamma
-        ret.parameter.coef0 = ret.model.param.coef0
-        ret.learn_disabled = 1
-        
-        return ret
-
-    def save_model(self, filename):
-        """Saves model to a file.
-        """
-        
-        cdef int ret
-        
-        if self.model is NULL:
-            raise ValueError("no model computed")
-        
-        ret = svm_save_model(filename, self.model)
-        
-        if ret == -1:
-            raise IOError("problem with svm_save_model()")

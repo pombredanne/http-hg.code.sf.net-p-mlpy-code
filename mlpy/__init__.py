@@ -4,7 +4,7 @@ import sys
 # extension modules
 if sys.version >= '3':
     from . import gsl
-    from .libsvm import *
+    #from .libsvm import *
     from .liblinear import *
     from .libml import *
     from .findpeaks import *
@@ -16,7 +16,7 @@ if sys.version >= '3':
     from .lcs import *
 else:
     import gsl
-    from libsvm import *
+    #from libsvm import *
     from liblinear import *
     from libml import *
     from findpeaks import *
@@ -48,8 +48,9 @@ from rfe import *
 from golub import *
 from pls import *
 from naivebayes import *
-from svm import *
+from linearsvm import *
 from lr import *
+from kernelsvm import *
 
 import crossval
 import hcluster
@@ -71,8 +72,9 @@ import rfe
 import golub
 import pls
 import naivebayes
-import svm
+import linearsvm
 import lr
+import kernelsvm
 
 # visible submodules
 import wavelet
@@ -99,11 +101,11 @@ __all__ += rfe.__all__
 __all__ += golub.__all__
 __all__ += pls.__all__
 __all__ += naivebayes.__all__
-__all__ += svm.__all__
+__all__ += linearsvm.__all__
 __all__ += lr.__all__
+__all__ += kernelsvm.__all__
 
 __all__ += ['LibLinear']
-__all__ += ['LibSvm']
 __all__ += ['findpeaks_dist', 'findpeaks_win']
 __all__ += ['kmeans']
 __all__ += ['kernel_linear', 'kernel_gaussian', 

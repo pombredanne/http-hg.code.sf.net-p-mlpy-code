@@ -96,8 +96,9 @@ class Parzen:
         """Returns the decision value (d(Kt)) for eache test sample.
 
         :Parameters:	
-           t : 1d (one sample) or 2d array_like object
-              test data ([M,] P)
+           Kt : 1d or 2d array_like object
+              precomputed test kernel matrix. (if kernel=None);
+              test data in input space (if kernel is a Kernel object).
         :Returns:	
            decision values : 1d (1) or 2d numpy array (M, 1)
               decision values for each observation.

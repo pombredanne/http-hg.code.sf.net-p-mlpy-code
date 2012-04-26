@@ -410,7 +410,7 @@ class KFDAC:
               regularization parameter
            kernel : None or mlpy.Kernel object.
               if kernel is None, K and Kt in .learn()
-              and in .transform() methods must be precomputed kernel 
+              and in .pred*() methods must be precomputed kernel 
               matricies, else K and Kt must be training (resp. 
               test) data in input space.
         """
